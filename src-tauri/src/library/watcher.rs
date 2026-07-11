@@ -39,7 +39,7 @@ fn sync_library(app: &AppHandle, root: &Path) {
     let state = app.state::<AppState>();
     let mut store = state.store.lock().unwrap();
 
-    let entries = scanner::scan(root, &store.files);
+    let entries = scanner::scan_with_pins(Some(root), &store.files);
 
     let root_prefix = root.to_string_lossy().into_owned();
     let existing: HashSet<&str> = entries.iter().map(|e| e.path.as_str()).collect();

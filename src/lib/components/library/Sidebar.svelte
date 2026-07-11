@@ -1,27 +1,25 @@
 <script lang="ts">
-  import { open } from "@tauri-apps/plugin-dialog";
+  import { homeDir } from "@tauri-apps/api/path";
   import Icon from "../common/Icon.svelte";
   import FileItem from "./FileItem.svelte";
   import FolderTree from "./FolderTree.svelte";
   import { library } from "../../stores/library.svelte";
   import { settings } from "../../stores/settings.svelte";
-  import { reader } from "../../stores/reader.svelte";
 
   const isMac = navigator.userAgent.includes("Mac");
   let searchEl = $state<HTMLInputElement>();
 
-  async function openExternalFile() {
-    const file = await open({
-      multiple: false,
-      filters: [{ name: "PDF", extensions: ["pdf"] }],
-    });
-    if (typeof file === "string") void reader.open(file);
-  }
-
-  async function changeFolder() {
-    const files = await settings.chooseLibraryFolder();
-    if (files) library.setFiles(files);
-  }
+  let home = $state("");
+  void homeDir().then((dir) => (home = dir.replace(/\/+$/, "")));
+  /** Library path, with the home directory shortened to "~". */
+  let folderPath = $derived.by(() => {
+    const path = settings.libraryPath;
+    if (!path) return "";
+    if (home && (path === home || path.startsWith(home + "/"))) {
+      return "~" + path.slice(home.length);
+    }
+    return path;
+  });
 
   function onKeydown(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === "f") {
@@ -37,14 +35,6 @@
 <aside class:mac={isMac}>
   <header data-tauri-drag-region>
     <span class="app-name" data-tauri-drag-region>Mantella</span>
-    <div class="actions">
-      <button class="icon-btn" title="Open a PDF file…" onclick={openExternalFile}>
-        <Icon name="file-plus" />
-      </button>
-      <button class="icon-btn" title="Change library folder…" onclick={changeFolder}>
-        <Icon name="folder" />
-      </button>
-    </div>
   </header>
 
   <div class="search">
@@ -71,12 +61,12 @@
       {#if library.pinned.length > 0}
         <div class="section">Pinned</div>
         {#each library.pinned as file (file.path)}
-          <FileItem {file} />
+          <FileItem {file} showDir={false} />
         {/each}
       {/if}
 
-      {#if library.files.length > 0}
-        <div class="section">Files</div>
+      <div class="section">Files</div>
+      {#if library.libraryFiles.length > 0}
         <FolderTree node={library.tree} />
       {:else}
         <div class="none">No PDFs in this folder yet</div>
@@ -85,8 +75,11 @@
   </div>
 
   <footer>
-    {library.files.length}
-    {library.files.length === 1 ? "file" : "files"}
+    <span class="folder-name" title={settings.libraryPath}>{folderPath}</span>
+    <span class="file-count">
+      {library.libraryFiles.length}
+      {library.libraryFiles.length === 1 ? "file" : "files"}
+    </span>
   </footer>
 </aside>
 
@@ -104,9 +97,8 @@
   header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     height: 48px;
-    padding: 0 10px 0 14px;
+    padding: 0 14px;
     flex-shrink: 0;
   }
 
@@ -120,11 +112,6 @@
     font-size: 13px;
     letter-spacing: 0.02em;
     color: var(--text-2);
-  }
-
-  .actions {
-    display: flex;
-    gap: 2px;
   }
 
   .search {
@@ -182,10 +169,26 @@
   }
 
   footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     flex-shrink: 0;
     padding: 8px 16px;
     border-top: 1px solid var(--border);
     color: var(--text-3);
     font-size: 11px;
+  }
+
+  .folder-name {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+
+  .file-count {
+    flex-shrink: 0;
   }
 </style>

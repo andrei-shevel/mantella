@@ -33,16 +33,13 @@ pub fn set_library_folder(
     *state.watcher.lock().unwrap() = Some(new_watcher);
 
     let store = state.store.lock().unwrap();
-    Ok(scanner::scan(&root, &store.files))
+    Ok(scanner::scan_with_pins(Some(&root), &store.files))
 }
 
 #[tauri::command]
 pub fn get_library(state: State<'_, AppState>) -> Vec<FileEntry> {
     let store = state.store.lock().unwrap();
-    match &store.settings.library_path {
-        Some(root) => scanner::scan(root, &store.files),
-        None => Vec::new(),
-    }
+    scanner::scan_with_pins(store.settings.library_path.as_deref(), &store.files)
 }
 
 #[tauri::command]

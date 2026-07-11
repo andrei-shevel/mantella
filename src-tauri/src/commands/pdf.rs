@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::pdf::engine::OpenInfo;
-use crate::state::AppState;
+use crate::state::{AppState, PendingOpenFiles};
 use crate::store::FileState;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -37,4 +37,9 @@ pub async fn open_document(state: State<'_, AppState>, path: String) -> Result<O
 #[tauri::command]
 pub fn close_document(state: State<'_, AppState>, doc_id: u64) {
     state.pdf.close(doc_id);
+}
+
+#[tauri::command]
+pub fn take_pending_open_files(pending: State<'_, PendingOpenFiles>) -> Vec<String> {
+    std::mem::take(&mut *pending.0.lock().unwrap())
 }

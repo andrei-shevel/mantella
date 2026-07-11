@@ -7,10 +7,13 @@ export interface Settings {
 export interface FileEntry {
   path: string;
   name: string;
+  /** Relative to the library root; the absolute path for files outside it. */
   relPath: string;
   size: number;
   modified: number | null;
   pinned: boolean;
+  /** False for pinned files living outside the library folder. */
+  inLibrary: boolean;
 }
 
 /**

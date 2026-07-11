@@ -36,9 +36,7 @@
     display: flex;
     align-items: center;
     gap: 8px; /* matches FileItem so folder and file labels align */
-    /* FileItem rows are stretched to 34px by their 24px pin button;
-       match that height so folder and file rows read as one list */
-    min-height: 34px;
+    min-height: 34px; /* matches FileItem row height */
     padding-top: 5px;
     padding-bottom: 5px;
     padding-right: 8px;

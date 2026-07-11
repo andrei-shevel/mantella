@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "../common/Icon.svelte";
+  import { library } from "../../stores/library.svelte";
   import { reader } from "../../stores/reader.svelte";
   import { ui } from "../../stores/ui.svelte";
 
@@ -19,6 +20,18 @@
 
   const isMac = navigator.userAgent.includes("Mac");
   let hasDoc = $derived(reader.docId !== null);
+  /** The open document's list entry; absent for unpinned files outside the library. */
+  let currentFile = $derived(library.files.find((f) => f.path === reader.path));
+
+  async function togglePin() {
+    if (currentFile) await library.togglePin(currentFile);
+    else if (reader.path) await library.pinExternal(reader.path);
+  }
+
+  async function closeDoc() {
+    await reader.flushSave(); // keep the reading position before dropping the doc
+    reader.close();
+  }
 
   function onPageInput(e: Event) {
     const input = e.currentTarget as HTMLInputElement;
@@ -34,6 +47,20 @@
   </button>
 
   <span class="title" data-tauri-drag-region>{reader.name}</span>
+
+  {#if reader.path !== null}
+    {@const pinned = currentFile?.pinned ?? false}
+    <button
+      class="icon-btn pin"
+      class:pinned
+      title={pinned ? "Unpin" : "Pin for quick access"}
+      onclick={() => void togglePin()}
+    >
+      <Icon name="pin" size={14} filled={pinned} />
+    </button>
+  {/if}
+
+  <div class="spacer" data-tauri-drag-region></div>
 
   {#if hasDoc}
     <div class="pages">
@@ -67,6 +94,12 @@
       </button>
     </div>
   {/if}
+
+  {#if reader.path !== null}
+    <button class="icon-btn" title="Close document" onclick={() => void closeDoc()}>
+      <Icon name="x" />
+    </button>
+  {/if}
 </div>
 
 <style>
@@ -89,13 +122,26 @@
   }
 
   .title {
-    flex: 1;
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 600;
     color: var(--text-1);
+  }
+
+  .pin {
+    flex-shrink: 0;
+    color: var(--text-3);
+  }
+
+  .pin.pinned {
+    color: var(--accent);
+  }
+
+  .spacer {
+    flex: 1;
+    align-self: stretch;
   }
 
   .pages {

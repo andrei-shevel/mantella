@@ -13,6 +13,8 @@ export const setPinned = (path: string, pinned: boolean) =>
 
 export const openDocument = (path: string) => invoke<OpenResult>("open_document", { path });
 
+export const takePendingOpenFiles = () => invoke<string[]>("take_pending_open_files");
+
 export const closeDocument = (docId: number) => invoke<void>("close_document", { docId });
 
 export const saveReadingState = (

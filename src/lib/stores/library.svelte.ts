@@ -65,7 +65,9 @@ class LibraryStore {
     return this.files.filter((f) => f.name.toLowerCase().includes(q));
   });
   pinned = $derived(this.files.filter((f) => f.pinned));
-  tree = $derived(buildTree(this.files));
+  /** Files under the library root; excludes pinned outsiders. */
+  libraryFiles = $derived(this.files.filter((f) => f.inLibrary));
+  tree = $derived(buildTree(this.libraryFiles));
 
   toggleDir(relPath: string) {
     if (this.expanded.has(relPath)) this.expanded.delete(relPath);
@@ -100,7 +102,17 @@ class LibraryStore {
   async togglePin(file: FileEntry) {
     const pinned = !file.pinned;
     await api.setPinned(file.path, pinned);
-    this.files = this.files.map((f) => (f.path === file.path ? { ...f, pinned } : f));
+    // an outside-the-library file is only listed because of its pin
+    this.files =
+      pinned || file.inLibrary
+        ? this.files.map((f) => (f.path === file.path ? { ...f, pinned } : f))
+        : this.files.filter((f) => f.path !== file.path);
+  }
+
+  /** Pin a file that isn't in the list yet (opened from outside the library). */
+  async pinExternal(path: string) {
+    await api.setPinned(path, true);
+    await this.refresh();
   }
 }
 

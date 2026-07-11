@@ -1,6 +1,5 @@
 <script lang="ts">
   import Icon from "../common/Icon.svelte";
-  import { library } from "../../stores/library.svelte";
   import { reader } from "../../stores/reader.svelte";
   import { formatBytes } from "../../utils/format";
   import type { FileEntry } from "../../api/types";
@@ -36,18 +35,6 @@
     <span class="name">{file.name}</span>
     {#if dir}<span class="dir">{dir}</span>{/if}
   </span>
-  <button
-    class="icon-btn pin"
-    class:pinned={file.pinned}
-    title={file.pinned ? "Unpin" : "Pin for quick access"}
-    tabindex="-1"
-    onclick={(e) => {
-      e.stopPropagation();
-      void library.togglePin(file);
-    }}
-  >
-    <Icon name="pin" size={13} filled={file.pinned} />
-  </button>
 </div>
 
 <style>
@@ -55,7 +42,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 4px 5px 8px;
+    min-height: 34px; /* keeps rows the height they had with the old pin button */
+    padding: 5px 8px;
     border-radius: var(--radius);
     outline: none;
   }
@@ -107,20 +95,5 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .pin {
-    width: 24px;
-    height: 24px;
-    visibility: hidden;
-  }
-
-  .item:hover .pin,
-  .pin.pinned {
-    visibility: visible;
-  }
-
-  .pin.pinned {
-    color: var(--accent);
   }
 </style>
