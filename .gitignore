@@ -1,0 +1,7 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/resources/pdfium/*
+!src-tauri/resources/pdfium/.gitkeep
+.DS_Store
+.idea

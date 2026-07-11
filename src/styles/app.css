@@ -1,0 +1,137 @@
+/* ---------- design tokens ---------- */
+:root {
+  color-scheme: light dark;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  --accent: #3b82f6;
+  --accent-strong: #2563eb;
+  --accent-soft: rgba(59, 130, 246, 0.13);
+
+  --bg-sidebar: #f4f4f5;
+  --bg-main: #e9e9ec;
+  --bg-raised: #ffffff;
+  --bg-input: rgba(0, 0, 0, 0.05);
+  --bg-toolbar: rgba(244, 244, 245, 0.82);
+
+  --text-1: #1c1c1e;
+  --text-2: #66666c;
+  --text-3: #9c9ca3;
+
+  --border: rgba(0, 0, 0, 0.09);
+  --hover: rgba(0, 0, 0, 0.055);
+  --active: rgba(0, 0, 0, 0.09);
+
+  --page-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 6px 20px rgba(0, 0, 0, 0.08);
+  --radius: 7px;
+  --folder-icon: #7aa5e8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #4c8dff;
+    --accent-strong: #6ea3ff;
+    --accent-soft: rgba(76, 141, 255, 0.2);
+
+    --bg-sidebar: #26262a;
+    --bg-main: #19191c;
+    --bg-raised: #303036;
+    --bg-input: rgba(255, 255, 255, 0.07);
+    --bg-toolbar: rgba(38, 38, 42, 0.82);
+
+    --text-1: #f0f0f2;
+    --text-2: #a4a4ad;
+    --text-3: #6c6c75;
+
+    --border: rgba(255, 255, 255, 0.09);
+    --hover: rgba(255, 255, 255, 0.06);
+    --active: rgba(255, 255, 255, 0.1);
+
+    --page-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 6px 24px rgba(0, 0, 0, 0.35);
+    --folder-icon: #6f9ce0;
+  }
+}
+
+/* ---------- base ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-1);
+  background: var(--bg-main);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: default;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-3);
+  opacity: 0.5;
+  border: 4px solid transparent;
+  background-clip: padding-box;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 3px;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* shared small icon button */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text-1);
+}
+
+.icon-btn:active {
+  background: var(--active);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}

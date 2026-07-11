@@ -1,0 +1,33 @@
+[package]
+name = "mantella"
+version = "0.1.0"
+description = "A fast PDF reader built on pdfium"
+edition = "2021"
+
+[lib]
+name = "mantella_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+pdfium-render = "0.8"
+image = { version = "0.25", default-features = false, features = ["png"] }
+notify = "8"
+notify-debouncer-full = "0.5"
+walkdir = "2"
+tokio = { version = "1", features = ["sync"] }
+http = "1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt"] }
+
+[profile.release]
+strip = true
+lto = true
