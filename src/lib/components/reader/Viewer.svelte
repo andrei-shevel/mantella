@@ -14,6 +14,27 @@
 
   const dpr = window.devicePixelRatio || 1;
 
+  // Mantella head (from mantella.png), peeking out of the corner.
+  const MASCOT = `                                    ....
+                                .-=======--:.
+                              :===============-::.....
+                           :-===========================--.
+                      ..:-==================================:
+                 .::-===========+*#%%%##+==============++====
+        ...::--================*%@@#:..+@%+===========#%%+==-
+.::---========================+@@@@#.  =@@%===============+=
+=====================++++=====+@@@@@%%%@@@%============+*#+.
+===========+++**##%%%@@@@@*====#@@@@@@@@@%+========+*#%@%-
+++**###%%%%@@@@@@@@@@@@@@@#=====+#%%%%%#*======+*#%@@@#-
+@@@@@@@@@@@@@@@@@@@@@@@@@@%=================*#%@@@@%*:
+@@@@@@@@@@@%%%@@@@@@@@@@@@%=============+*%%@@@@@*-.
+@@@@@%%#*++===+@@@@@@@@@@@%==========+#%@@@@@@#=.
+@%#*+=========*@@@@@@@@@@@@#======+#%@@@@@@%+:
++===========*%@@@@@@@@@@@@@@%#*##%@@@@@@@#=.
+=========+#%@@@@@@@@@@@@@@@@@@@@@@@@@@@#-
+=====+*#%@@@@@@@@@@@%###%@@@@@@@@@@@@#-
+==+*#%@@@@@@@@@@@@#+====+@@@@@@@@@@%=`;
+
   let container = $state<HTMLDivElement>();
   let containerWidth = $state(0);
   let containerHeight = $state(0);
@@ -243,6 +264,7 @@
           title="No document open"
           subtitle="Select a PDF from the sidebar, or press ⌘F to search your library."
         />
+        <pre class="mascot" aria-hidden="true">{MASCOT}</pre>
       {/if}
     </div>
   {/if}
@@ -275,6 +297,20 @@
     align-items: center;
     justify-content: center;
     background: var(--bg-main);
+  }
+
+  .mascot {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.1;
+    color: var(--text-3);
+    opacity: 0.55;
+    user-select: none;
+    pointer-events: none;
   }
 
   .spinner {
