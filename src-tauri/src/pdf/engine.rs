@@ -40,6 +40,11 @@ enum Request {
         width: u32,
         reply: RenderCallback,
     },
+    PageText {
+        doc_id: u64,
+        page_index: u16,
+        reply: oneshot::Sender<Result<Vec<super::text::TextRun>>>,
+    },
     Close {
         doc_id: u64,
     },
@@ -86,6 +91,22 @@ impl PdfWorker {
         }
     }
 
+    pub async fn page_text(
+        &self,
+        doc_id: u64,
+        page_index: u16,
+    ) -> Result<Vec<super::text::TextRun>> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Request::PageText {
+                doc_id,
+                page_index,
+                reply,
+            })
+            .map_err(|_| worker_gone())?;
+        rx.await.map_err(|_| worker_gone())?
+    }
+
     pub fn close(&self, doc_id: u64) {
         let _ = self.tx.send(Request::Close { doc_id });
     }
@@ -126,6 +147,17 @@ fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
                     .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
                     .and_then(|doc| super::renderer::render_page_png(doc, page_index, width));
                 reply(result);
+            }
+            Request::PageText {
+                doc_id,
+                page_index,
+                reply,
+            } => {
+                let result = docs
+                    .get(&doc_id)
+                    .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
+                    .and_then(|doc| super::text::extract_text_runs(doc, page_index));
+                let _ = reply.send(result);
             }
             Request::Close { doc_id } => {
                 docs.remove(&doc_id);
@@ -191,6 +223,17 @@ mod tests {
         });
         let png = rx.recv().unwrap().expect("render page 0");
         assert!(png.starts_with(&[0x89, b'P', b'N', b'G']));
+
+        let runs = runtime
+            .block_on(worker.page_text(info.doc_id, 0))
+            .expect("text of page 0");
+        assert!(!runs.is_empty());
+        for run in &runs {
+            assert!(!run.text.trim().is_empty());
+            assert!(run.width > 0.0 && run.height > 0.0);
+            assert!(run.x >= 0.0 && run.x + run.width <= info.pages[0].width + 1.0);
+            assert!(run.y >= 0.0 && run.y + run.height <= info.pages[0].height + 1.0);
+        }
 
         worker.close(info.doc_id);
     }

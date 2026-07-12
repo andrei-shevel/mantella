@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { FileEntry, OpenResult, Settings } from "./types";
+import type { FileEntry, OpenResult, Settings, TextRun } from "./types";
 
 export const getSettings = () => invoke<Settings>("get_settings");
 
@@ -16,6 +16,9 @@ export const openDocument = (path: string) => invoke<OpenResult>("open_document"
 export const takePendingOpenFiles = () => invoke<string[]>("take_pending_open_files");
 
 export const closeDocument = (docId: number) => invoke<void>("close_document", { docId });
+
+export const getPageText = (docId: number, pageIndex: number) =>
+  invoke<TextRun[]>("get_page_text", { docId, pageIndex });
 
 export const saveReadingState = (
   path: string,

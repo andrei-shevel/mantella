@@ -1,5 +1,6 @@
 use crate::error::Result;
 use crate::pdf::engine::OpenInfo;
+use crate::pdf::text::TextRun;
 use crate::state::{AppState, PendingOpenFiles};
 use crate::store::FileState;
 use serde::Serialize;
@@ -32,6 +33,15 @@ pub async fn open_document(state: State<'_, AppState>, path: String) -> Result<O
         info,
         state: file_state,
     })
+}
+
+#[tauri::command]
+pub async fn get_page_text(
+    state: State<'_, AppState>,
+    doc_id: u64,
+    page_index: u16,
+) -> Result<Vec<TextRun>> {
+    state.pdf.page_text(doc_id, page_index).await
 }
 
 #[tauri::command]

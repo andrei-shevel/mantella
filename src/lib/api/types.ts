@@ -35,6 +35,18 @@ export interface PageSize {
   height: number;
 }
 
+/**
+ * A rectangular run of text on a page. Coordinates are PDF points with a
+ * top-left origin, matching the page layout.
+ */
+export interface TextRun {
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface OpenResult {
   docId: number;
   pageCount: number;
