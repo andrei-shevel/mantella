@@ -45,6 +45,7 @@ class ReaderStore {
       this.lastPageOffset = result.state.pageOffset;
       this.pages = result.pages;
       this.docId = result.docId;
+      void api.setLastFile(path);
     } catch (e) {
       if (this.path === path) this.error = String(e);
     } finally {
@@ -55,6 +56,7 @@ class ReaderStore {
   /** Drop the current document (e.g. the file vanished from the library). */
   close() {
     if (this.docId !== null) void api.closeDocument(this.docId);
+    void api.setLastFile(null);
     this.path = null;
     this.docId = null;
     this.pages = [];

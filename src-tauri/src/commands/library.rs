@@ -42,6 +42,14 @@ pub fn get_library(state: State<'_, AppState>) -> Vec<FileEntry> {
     scanner::scan_with_pins(store.settings.library_path.as_deref(), &store.files)
 }
 
+/// Records (or clears, with `None`) the document to reopen on next launch.
+#[tauri::command]
+pub fn set_last_file(state: State<'_, AppState>, path: Option<String>) -> Result<()> {
+    let mut store = state.store.lock().unwrap();
+    store.settings.last_file = path.map(PathBuf::from);
+    store.save_settings()
+}
+
 #[tauri::command]
 pub fn set_pinned(state: State<'_, AppState>, path: String, pinned: bool) -> Result<()> {
     let mut store = state.store.lock().unwrap();

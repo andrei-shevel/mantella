@@ -13,10 +13,12 @@
   import Viewer from "./lib/components/reader/Viewer.svelte";
 
   // Open files handed to us by the OS (Finder "Open With", double-click).
-  async function openExternal() {
+  // Returns whether a file was opened.
+  async function openExternal(): Promise<boolean> {
     const paths = await takePendingOpenFiles();
     const last = paths.at(-1);
     if (last) await reader.open(last);
+    return last !== undefined;
   }
 
   // File → Open PDF…
@@ -45,7 +47,9 @@
         await onMenuOpenFile(() => void openFileDialog()),
         await onMenuChangeFolder(() => void changeFolder()),
       );
-      await openExternal();
+      // A file passed by the OS wins; otherwise restore the last open document.
+      const opened = await openExternal();
+      if (!opened && settings.lastFile) await reader.open(settings.lastFile);
     })();
 
     // Persist the reading position before the window closes.

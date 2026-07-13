@@ -2,6 +2,7 @@
 
 export interface Settings {
   libraryPath: string | null;
+  lastFile: string | null;
 }
 
 export interface FileEntry {

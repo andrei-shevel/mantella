@@ -4,11 +4,13 @@ import type { FileEntry } from "../api/types";
 
 class SettingsStore {
   libraryPath = $state<string | null>(null);
+  lastFile = $state<string | null>(null);
   ready = $state(false);
 
   async init() {
     const settings = await api.getSettings();
     this.libraryPath = settings.libraryPath;
+    this.lastFile = settings.lastFile;
     this.ready = true;
   }
 

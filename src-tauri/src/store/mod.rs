@@ -19,7 +19,11 @@ pub struct Store {
 
 impl Store {
     pub fn load(dir: PathBuf) -> Self {
-        let settings = read_json(&dir.join("settings.json")).unwrap_or_default();
+        let mut settings: Settings = read_json(&dir.join("settings.json")).unwrap_or_default();
+        // Don't try to reopen a last file that has since been moved or deleted.
+        if settings.last_file.as_deref().is_some_and(|p| !p.exists()) {
+            settings.last_file = None;
+        }
         let files = read_json(&dir.join("files.json")).unwrap_or_default();
         Self { dir, settings, files }
     }

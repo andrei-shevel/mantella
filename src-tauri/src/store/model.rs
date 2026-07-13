@@ -5,6 +5,7 @@ use std::path::PathBuf;
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
     pub library_path: Option<PathBuf>,
+    pub last_file: Option<PathBuf>,
 }
 
 /// Per-file persisted state, keyed by absolute file path.

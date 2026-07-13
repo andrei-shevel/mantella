@@ -11,6 +11,8 @@ export const getLibrary = () => invoke<FileEntry[]>("get_library");
 export const setPinned = (path: string, pinned: boolean) =>
   invoke<void>("set_pinned", { path, pinned });
 
+export const setLastFile = (path: string | null) => invoke<void>("set_last_file", { path });
+
 export const openDocument = (path: string) => invoke<OpenResult>("open_document", { path });
 
 export const takePendingOpenFiles = () => invoke<string[]>("take_pending_open_files");
