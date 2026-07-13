@@ -107,7 +107,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 44px;
+    height: 48px;
     padding: 0 12px;
     flex-shrink: 0;
     background: var(--bg-toolbar);

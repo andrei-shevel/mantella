@@ -44,9 +44,22 @@ pub fn run() {
     tauri::Builder::default()
         .manage(PendingOpenFiles::default())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_decorum::init())
         .register_asynchronous_uri_scheme_protocol(pdf::protocol::SCHEME, pdf::protocol::handle)
         .setup(|app| {
             setup_menu(app)?;
+
+            // Tauri's `trafficLightPosition` config is ignored on macOS (the
+            // buttons snap back to the default inset after the webview attaches),
+            // so position them via decorum, which also re-applies on resize and
+            // fullscreen exit. The inset matches the 48px header/toolbar.
+            #[cfg(target_os = "macos")]
+            {
+                use tauri_plugin_decorum::WebviewWindowExt;
+                if let Some(main) = app.get_webview_window("main") {
+                    let _ = main.set_traffic_lights_inset(14.0, 25.75);
+                }
+            }
 
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
