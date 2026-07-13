@@ -8,7 +8,7 @@ A fast, minimal desktop PDF reader built with **Tauri 2**, **Svelte 5**, and **p
 - **Live sync** — files copied into (or removed from) the folder appear/disappear in the sidebar automatically.
 - **Search & pins** — explorer-style folder tree, filename search with flat results, pin favorites to the top for quick access.
 - **Reading position** — the current page, scroll offset, and zoom are saved per file and restored when you reopen it (or relaunch the app).
-- **Crisp rendering** — pages are rasterized by pdfium at the exact zoom × display scale, served through a custom `pdfp://` protocol so they load as cached images.
+- **Crisp rendering** — pages are rasterized by pdfium at the exact zoom × display scale, served through a custom `mantella://` protocol so they load as cached images.
 
 ### Shortcuts
 
@@ -57,7 +57,7 @@ src-tauri/src/
   pdf/engine.rs           pdfium worker thread (pdfium types are !Send, so all
                           PDF work is serialized onto one owning thread)
   pdf/renderer.rs         page → PNG at a requested pixel width
-  pdf/protocol.rs         pdfp://{docId}/{page}?w={px} scheme handler
+  pdf/protocol.rs         mantella://{docId}/{page}?w={px} scheme handler
   library/scanner.rs      recursive *.pdf scan
   library/watcher.rs      debounced fs watcher → `library-changed` event
   store/                  settings.json + files.json (per-file position/zoom/pin)

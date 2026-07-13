@@ -1,14 +1,14 @@
-//! Custom `pdfp://` URI scheme serving rendered page bitmaps, so the
+//! Custom `mantella://` URI scheme serving rendered page bitmaps, so the
 //! frontend can load pages as plain `<img>` elements with browser caching
 //! instead of shuttling megabytes of pixels through the IPC bridge.
 //!
-//! URL shape: `pdfp://localhost/{docId}/{pageIndex}?w={pixelWidth}`
+//! URL shape: `mantella://localhost/{docId}/{pageIndex}?w={pixelWidth}`
 
 use crate::state::AppState;
 use tauri::http;
 use tauri::{Manager, UriSchemeContext, UriSchemeResponder};
 
-pub const SCHEME: &str = "pdfp";
+pub const SCHEME: &str = "mantella";
 
 pub fn handle<R: tauri::Runtime>(
     ctx: UriSchemeContext<'_, R>,
@@ -17,7 +17,7 @@ pub fn handle<R: tauri::Runtime>(
 ) {
     let uri = request.uri();
     let Some((doc_id, page_index, width)) = parse(uri.path(), uri.query()) else {
-        responder.respond(error_response(400, "malformed pdfp:// URL"));
+        responder.respond(error_response(400, "malformed mantella:// URL"));
         return;
     };
 
