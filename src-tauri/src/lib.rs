@@ -95,6 +95,8 @@ pub fn run() {
             commands::library::set_pinned,
             commands::pdf::open_document,
             commands::pdf::get_page_text,
+            commands::pdf::get_page_links,
+            commands::pdf::open_url,
             commands::pdf::close_document,
             commands::pdf::take_pending_open_files,
             commands::reading::save_reading_state,

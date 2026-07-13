@@ -24,6 +24,7 @@ notify-debouncer-full = "0.5"
 walkdir = "2"
 tokio = { version = "1", features = ["sync"] }
 http = "1"
+open = "5"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt"] }

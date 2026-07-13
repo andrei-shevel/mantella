@@ -248,6 +248,7 @@
             renderWidth={reader.pages[i].width * (renderScale || scale) * dpr}
             pointWidth={reader.pages[i].width}
             pointHeight={reader.pages[i].height}
+            goToPage={scrollToPage}
           />
         {/each}
       {/if}

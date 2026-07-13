@@ -47,6 +47,20 @@ export interface TextRun {
   height: number;
 }
 
+/**
+ * A clickable link region on a page. Coordinates are PDF points with a
+ * top-left origin. Exactly one of `uri` (external target) or `page`
+ * (zero-based internal target) is set.
+ */
+export interface PageLink {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  uri: string | null;
+  page: number | null;
+}
+
 export interface OpenResult {
   docId: number;
   pageCount: number;

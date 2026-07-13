@@ -1,5 +1,6 @@
-use crate::error::Result;
+use crate::error::{AppError, Result};
 use crate::pdf::engine::OpenInfo;
+use crate::pdf::links::PageLink;
 use crate::pdf::text::TextRun;
 use crate::state::{AppState, PendingOpenFiles};
 use crate::store::FileState;
@@ -42,6 +43,30 @@ pub async fn get_page_text(
     page_index: u16,
 ) -> Result<Vec<TextRun>> {
     state.pdf.page_text(doc_id, page_index).await
+}
+
+#[tauri::command]
+pub async fn get_page_links(
+    state: State<'_, AppState>,
+    doc_id: u64,
+    page_index: u16,
+) -> Result<Vec<PageLink>> {
+    state.pdf.page_links(doc_id, page_index).await
+}
+
+/// Opens an external link from a PDF in the system browser. Only web and
+/// mail schemes are allowed; anything else a document might carry (file:,
+/// custom app schemes) is refused.
+#[tauri::command]
+pub fn open_url(url: String) -> Result<()> {
+    let allowed = ["http://", "https://", "mailto:"];
+    if !allowed
+        .iter()
+        .any(|p| url.get(..p.len()).is_some_and(|s| s.eq_ignore_ascii_case(p)))
+    {
+        return Err(AppError::Message(format!("refusing to open link: {url}")));
+    }
+    open::that_detached(&url).map_err(|e| AppError::Message(format!("failed to open {url}: {e}")))
 }
 
 #[tauri::command]

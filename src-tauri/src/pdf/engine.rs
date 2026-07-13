@@ -45,6 +45,11 @@ enum Request {
         page_index: u16,
         reply: oneshot::Sender<Result<Vec<super::text::TextRun>>>,
     },
+    PageLinks {
+        doc_id: u64,
+        page_index: u16,
+        reply: oneshot::Sender<Result<Vec<super::links::PageLink>>>,
+    },
     Close {
         doc_id: u64,
     },
@@ -107,6 +112,22 @@ impl PdfWorker {
         rx.await.map_err(|_| worker_gone())?
     }
 
+    pub async fn page_links(
+        &self,
+        doc_id: u64,
+        page_index: u16,
+    ) -> Result<Vec<super::links::PageLink>> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Request::PageLinks {
+                doc_id,
+                page_index,
+                reply,
+            })
+            .map_err(|_| worker_gone())?;
+        rx.await.map_err(|_| worker_gone())?
+    }
+
     pub fn close(&self, doc_id: u64) {
         let _ = self.tx.send(Request::Close { doc_id });
     }
@@ -159,6 +180,17 @@ fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
                     .and_then(|doc| super::text::extract_text_runs(doc, page_index));
                 let _ = reply.send(result);
             }
+            Request::PageLinks {
+                doc_id,
+                page_index,
+                reply,
+            } => {
+                let result = docs
+                    .get(&doc_id)
+                    .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
+                    .and_then(|doc| super::links::extract_links(doc, page_index));
+                let _ = reply.send(result);
+            }
             Request::Close { doc_id } => {
                 docs.remove(&doc_id);
             }
@@ -200,13 +232,24 @@ fn open_document(
 mod tests {
     use super::*;
 
+    // pdfium-render's thread-safe bindings hold a global lock from
+    // FPDF_InitLibrary until FPDF_DestroyLibrary, and the worker leaks its
+    // Pdfium instance, so a second worker in the same process would block
+    // forever. All tests share one worker, exactly like the app does.
+    fn test_worker() -> &'static PdfWorker {
+        static WORKER: std::sync::OnceLock<PdfWorker> = std::sync::OnceLock::new();
+        WORKER.get_or_init(|| {
+            let pdfium_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/pdfium");
+            PdfWorker::spawn(vec![pdfium_dir])
+        })
+    }
+
     /// Full path through the worker: bind pdfium, open a document, render a
     /// page to PNG. Requires `npm run setup` to have downloaded the library.
     #[test]
     fn opens_and_renders_a_page() {
-        let pdfium_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/pdfium");
         let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample.pdf");
-        let worker = PdfWorker::spawn(vec![pdfium_dir]);
+        let worker = test_worker();
 
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
@@ -234,6 +277,44 @@ mod tests {
             assert!(run.x >= 0.0 && run.x + run.width <= info.pages[0].width + 1.0);
             assert!(run.y >= 0.0 && run.y + run.height <= info.pages[0].height + 1.0);
         }
+
+        worker.close(info.doc_id);
+    }
+
+    /// links.pdf has two link annotations on page 1: a URI link over
+    /// [72, 700, 200, 720] and a GoTo link to page 2 over [72, 650, 200, 670]
+    /// (bottom-up PDF coordinates on a 612x792 page).
+    #[test]
+    fn extracts_page_links() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/links.pdf");
+        let worker = test_worker();
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let info = runtime.block_on(worker.open(fixture)).expect("open fixture");
+        assert_eq!(info.page_count, 2);
+
+        let links = runtime
+            .block_on(worker.page_links(info.doc_id, 0))
+            .expect("links of page 0");
+        assert_eq!(links.len(), 2);
+
+        let uri_link = links.iter().find(|l| l.uri.is_some()).expect("uri link");
+        assert_eq!(uri_link.uri.as_deref(), Some("https://example.com/"));
+        assert!((uri_link.x - 72.0).abs() < 0.5);
+        assert!((uri_link.y - (792.0 - 720.0)).abs() < 0.5);
+        assert!((uri_link.width - 128.0).abs() < 0.5);
+        assert!((uri_link.height - 20.0).abs() < 0.5);
+
+        let goto_link = links.iter().find(|l| l.page.is_some()).expect("goto link");
+        assert_eq!(goto_link.page, Some(1));
+        assert!((goto_link.y - (792.0 - 670.0)).abs() < 0.5);
+
+        assert!(runtime
+            .block_on(worker.page_links(info.doc_id, 1))
+            .expect("links of page 1")
+            .is_empty());
 
         worker.close(info.doc_id);
     }
