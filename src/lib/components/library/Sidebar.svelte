@@ -36,7 +36,7 @@
 <aside class:mac={isMac}>
   <header data-tauri-drag-region>
     <button
-      class="icon-btn toggle"
+      class="icon-btn"
       title="Toggle sidebar"
       onclick={() => ui.toggleSidebar()}
     >
@@ -112,11 +112,6 @@
   aside.mac header {
     /* leave room for the macOS traffic lights (overlay title bar) */
     padding-left: 84px;
-  }
-
-  .toggle {
-    /* keep the toggle on the right, clear of the traffic lights */
-    margin-left: auto;
   }
 
   .search {
