@@ -25,7 +25,6 @@ walkdir = "2"
 tokio = { version = "1", features = ["sync"] }
 http = "1"
 open = "5"
-tauri-plugin-decorum = "1.1.1"
 tauri-plugin-window-state = "2"
 
 [dev-dependencies]

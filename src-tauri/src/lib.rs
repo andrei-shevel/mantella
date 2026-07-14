@@ -40,32 +40,15 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Positions the macOS traffic lights to line up with the 48px header/toolbar.
-/// Tauri's `trafficLightPosition` config is ignored (the buttons snap back to
-/// the default inset after the webview attaches), and the window-state plugin
-/// resets them again when it restores the saved size on launch, so we drive
-/// this via decorum both at setup and on every resize.
-#[cfg(target_os = "macos")]
-fn position_traffic_lights(window: &tauri::WebviewWindow) {
-    use tauri_plugin_decorum::WebviewWindowExt;
-    let _ = window.set_traffic_lights_inset(14.0, 25.75);
-}
-
 pub fn run() {
     tauri::Builder::default()
         .manage(PendingOpenFiles::default())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_decorum::init())
         // Persists and restores the main window's size and position across launches.
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .register_asynchronous_uri_scheme_protocol(pdf::protocol::SCHEME, pdf::protocol::handle)
         .setup(|app| {
             setup_menu(app)?;
-
-            #[cfg(target_os = "macos")]
-            if let Some(main) = app.get_webview_window("main") {
-                position_traffic_lights(&main);
-            }
 
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
@@ -95,17 +78,6 @@ pub fn run() {
                 watcher: Mutex::new(watcher),
             });
             Ok(())
-        })
-        .on_window_event(|_window, _event| {
-            // The window-state plugin restores the saved size after setup runs,
-            // which knocks the macOS traffic lights back to their default inset;
-            // re-apply ours whenever the window resizes.
-            #[cfg(target_os = "macos")]
-            if let tauri::WindowEvent::Resized(_) = _event {
-                if let Some(main) = _window.get_webview_window("main") {
-                    position_traffic_lights(&main);
-                }
-            }
         })
         .on_menu_event(|app, event| {
             match event.id().as_ref() {

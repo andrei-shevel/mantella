@@ -42,9 +42,11 @@
 </script>
 
 <div class="toolbar" class:pad-mac={isMac && !ui.sidebarOpen} data-tauri-drag-region>
-  <button class="icon-btn" title="Toggle sidebar" onclick={() => ui.toggleSidebar()}>
-    <Icon name="panel-left" />
-  </button>
+  {#if !ui.sidebarOpen}
+    <button class="icon-btn" title="Toggle sidebar" onclick={() => ui.toggleSidebar()}>
+      <Icon name="panel-left" />
+    </button>
+  {/if}
 
   <span class="title" data-tauri-drag-region>{reader.name}</span>
 

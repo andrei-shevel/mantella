@@ -5,6 +5,7 @@
   import FolderTree from "./FolderTree.svelte";
   import { library } from "../../stores/library.svelte";
   import { settings } from "../../stores/settings.svelte";
+  import { ui } from "../../stores/ui.svelte";
 
   const isMac = navigator.userAgent.includes("Mac");
   let searchEl = $state<HTMLInputElement>();
@@ -34,7 +35,13 @@
 
 <aside class:mac={isMac}>
   <header data-tauri-drag-region>
-    <span class="app-name" data-tauri-drag-region>Mantella</span>
+    <button
+      class="icon-btn toggle"
+      title="Toggle sidebar"
+      onclick={() => ui.toggleSidebar()}
+    >
+      <Icon name="panel-left" />
+    </button>
   </header>
 
   <div class="search">
@@ -107,11 +114,9 @@
     padding-left: 84px;
   }
 
-  .app-name {
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 0.02em;
-    color: var(--text-2);
+  .toggle {
+    /* keep the toggle on the right, clear of the traffic lights */
+    margin-left: auto;
   }
 
   .search {
