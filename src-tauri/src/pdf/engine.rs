@@ -204,9 +204,10 @@ fn open_document(
     docs: &mut HashMap<u64, PdfDocument<'static>>,
     next_id: &mut u64,
 ) -> Result<OpenInfo> {
-    let document = pdfium
-        .load_pdf_from_file(path, None)
-        .map_err(|e| AppError::Pdf(format!("failed to open {}: {e}", path.display())))?;
+    let document = pdfium.load_pdf_from_file(path, None).map_err(|e| {
+        eprintln!("failed to open {}: {e:?}", path.display());
+        AppError::Message(open_error_message(&e).to_string())
+    })?;
 
     let pages: Vec<PageSize> = document
         .pages()
@@ -226,6 +227,28 @@ fn open_document(
         page_count: pages.len() as u16,
         pages,
     })
+}
+
+/// Turns a pdfium load failure into a message fit for the error screen.
+fn open_error_message(error: &PdfiumError) -> &'static str {
+    match error {
+        PdfiumError::PdfiumLibraryInternalError(internal) => match internal {
+            PdfiumInternalError::FormatError => {
+                "The file is damaged or isn't a valid PDF, so it can't be displayed."
+            }
+            PdfiumInternalError::PasswordError => {
+                "This PDF is password-protected, which isn't supported yet."
+            }
+            PdfiumInternalError::SecurityError => {
+                "This PDF's security settings prevent it from being opened."
+            }
+            PdfiumInternalError::FileError => {
+                "The file couldn't be read. It may have been moved, deleted, or is inaccessible."
+            }
+            _ => "Something went wrong while opening this PDF.",
+        },
+        _ => "Something went wrong while opening this PDF.",
+    }
 }
 
 #[cfg(test)]
@@ -317,6 +340,25 @@ mod tests {
             .is_empty());
 
         worker.close(info.doc_id);
+    }
+
+    /// Opening a corrupted/non-PDF file should fail with a friendly message
+    /// rather than surfacing pdfium's internal error string.
+    #[test]
+    fn open_reports_friendly_error_for_corrupt_file() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/corrupt.pdf");
+        let worker = test_worker();
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let err = runtime
+            .block_on(worker.open(fixture))
+            .expect_err("corrupt file should fail to open");
+        assert_eq!(
+            err.to_string(),
+            "The file is damaged or isn't a valid PDF, so it can't be displayed."
+        );
     }
 }
 
