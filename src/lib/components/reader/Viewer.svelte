@@ -78,6 +78,11 @@
     return { items, totalHeight: items.length > 0 ? y - GAP + PADDING : 0 };
   });
 
+  // Widest page + padding: sizing the canvas to the content keeps pages
+  // inside it, so zoomed-in pages can scroll all the way left (overflow left
+  // of a scroll container's origin is unreachable).
+  let contentWidth = $derived(maxPageWidth * scale + PADDING * 2);
+
   let visible = $derived.by(() => {
     const from = scrollTop - VISIBLE_BUFFER;
     const to = scrollTop + containerHeight + VISIBLE_BUFFER;
@@ -241,7 +246,7 @@
         bind:clientHeight={containerHeight}
         onscroll={onScroll}
       >
-        <div class="canvas" style="height: {layout.totalHeight}px">
+        <div class="canvas" style="height: {layout.totalHeight}px; width: {contentWidth}px">
           {#if reader.docId !== null}
             {#each visible as i (i)}
               <Page
