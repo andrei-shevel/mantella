@@ -2,8 +2,11 @@
   import { tick } from "svelte";
   import Page from "./Page.svelte";
   import Toolbar from "./Toolbar.svelte";
+  import BookmarkMarkers from "./BookmarkMarkers.svelte";
+  import BookmarksPanel from "./BookmarksPanel.svelte";
   import EmptyState from "../common/EmptyState.svelte";
   import { reader } from "../../stores/reader.svelte";
+  import { ui } from "../../stores/ui.svelte";
 
   const PT_TO_PX = 96 / 72; // 100% zoom = 96dpi CSS pixels for 72dpi PDF points
   const PADDING = 28;
@@ -229,30 +232,48 @@
     pageCount={layout.items.length}
   />
 
-  <div
-    class="scroll"
-    bind:this={container}
-    bind:clientWidth={containerWidth}
-    bind:clientHeight={containerHeight}
-    onscroll={onScroll}
-  >
-    <div class="canvas" style="height: {layout.totalHeight}px">
-      {#if reader.docId !== null}
-        {#each visible as i (i)}
-          <Page
-            docId={reader.docId}
-            index={i}
-            top={layout.items[i].top}
-            width={layout.items[i].width}
-            height={layout.items[i].height}
-            renderWidth={reader.pages[i].width * (renderScale || scale) * dpr}
-            pointWidth={reader.pages[i].width}
-            pointHeight={reader.pages[i].height}
-            goToPage={scrollToPage}
-          />
-        {/each}
+  <div class="body">
+    <div class="doc-area">
+      <div
+        class="scroll"
+        bind:this={container}
+        bind:clientWidth={containerWidth}
+        bind:clientHeight={containerHeight}
+        onscroll={onScroll}
+      >
+        <div class="canvas" style="height: {layout.totalHeight}px">
+          {#if reader.docId !== null}
+            {#each visible as i (i)}
+              <Page
+                docId={reader.docId}
+                index={i}
+                top={layout.items[i].top}
+                width={layout.items[i].width}
+                height={layout.items[i].height}
+                renderWidth={reader.pages[i].width * (renderScale || scale) * dpr}
+                pointWidth={reader.pages[i].width}
+                pointHeight={reader.pages[i].height}
+                goToPage={scrollToPage}
+              />
+            {/each}
+          {/if}
+        </div>
+      </div>
+
+      {#if reader.docId !== null && reader.bookmarks.length > 0}
+        <BookmarkMarkers
+          {layout}
+          {scrollTop}
+          viewportHeight={containerHeight}
+          gap={GAP}
+          {scrollToAnchor}
+        />
       {/if}
     </div>
+
+    {#if ui.bookmarksPanelOpen && reader.docId !== null}
+      <BookmarksPanel {scrollToAnchor} />
+    {/if}
   </div>
 
   {#if reader.docId === null}
@@ -280,6 +301,20 @@
     display: flex;
     flex-direction: column;
     background: var(--bg-main);
+  }
+
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+
+  .doc-area {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .scroll {

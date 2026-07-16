@@ -23,6 +23,7 @@ pub struct FileState {
     pub page_offset: f64,
     pub zoom: Option<f64>,
     pub last_opened: Option<u64>,
+    pub bookmarks: Vec<Bookmark>,
 }
 
 impl Default for FileState {
@@ -33,6 +34,29 @@ impl Default for FileState {
             page_offset: 0.0,
             zoom: None,
             last_opened: None,
+            bookmarks: Vec::new(),
+        }
+    }
+}
+
+/// A named position inside a document, anchored the same way as the reading
+/// position: page + offset within that page (fraction of the page height).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Bookmark {
+    pub id: String,
+    pub title: String,
+    pub page: u16,
+    pub page_offset: f64,
+}
+
+impl Default for Bookmark {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            title: String::new(),
+            page: 1,
+            page_offset: 0.0,
         }
     }
 }

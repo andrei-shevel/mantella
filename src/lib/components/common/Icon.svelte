@@ -13,6 +13,8 @@
     minus: "M5 12h14",
     x: "M18 6 6 18 M6 6l12 12",
     "fit-width": "M18 8l4 4-4 4 M6 8l-4 4 4 4 M2 12h20",
+    bookmark: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z",
+    "bookmark-plus": "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z M12 7v6 M9 10h6",
   };
 
   let {

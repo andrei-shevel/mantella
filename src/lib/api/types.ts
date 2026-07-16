@@ -28,6 +28,18 @@ export interface FileState {
   pageOffset: number;
   zoom: number | null;
   lastOpened: number | null;
+  bookmarks: Bookmark[];
+}
+
+/**
+ * A named position inside a document, anchored like the reading position:
+ * page + offset within that page (fraction of page height).
+ */
+export interface Bookmark {
+  id: string;
+  title: string;
+  page: number;
+  pageOffset: number;
 }
 
 /** Page dimensions in PDF points (1/72 inch). */

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { FileEntry, OpenResult, PageLink, Settings, TextRun } from "./types";
+import type { Bookmark, FileEntry, OpenResult, PageLink, Settings, TextRun } from "./types";
 
 export const getSettings = () => invoke<Settings>("get_settings");
 
@@ -33,3 +33,6 @@ export const saveReadingState = (
   pageOffset: number,
   zoom: number | null,
 ) => invoke<void>("save_reading_state", { path, page, pageOffset, zoom });
+
+export const saveBookmarks = (path: string, bookmarks: Bookmark[]) =>
+  invoke<void>("save_bookmarks", { path, bookmarks });

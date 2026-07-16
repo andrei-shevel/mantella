@@ -95,6 +95,15 @@
         <Icon name="fit-width" />
       </button>
     </div>
+
+    <button
+      class="icon-btn"
+      class:on={ui.bookmarksPanelOpen}
+      title="Bookmarks"
+      onclick={() => ui.toggleBookmarksPanel()}
+    >
+      <Icon name="bookmark" size={15} />
+    </button>
   {/if}
 
   {#if reader.path !== null}

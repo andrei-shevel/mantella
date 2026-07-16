@@ -103,6 +103,7 @@ pub fn run() {
             commands::pdf::close_document,
             commands::pdf::take_pending_open_files,
             commands::reading::save_reading_state,
+            commands::bookmarks::save_bookmarks,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

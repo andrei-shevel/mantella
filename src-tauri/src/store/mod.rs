@@ -1,6 +1,6 @@
 mod model;
 
-pub use model::{FileState, Settings};
+pub use model::{Bookmark, FileState, Settings};
 
 use crate::error::{AppError, Result};
 use serde::de::DeserializeOwned;

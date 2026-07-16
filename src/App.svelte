@@ -11,6 +11,7 @@
   import Welcome from "./lib/components/onboarding/Welcome.svelte";
   import Sidebar from "./lib/components/library/Sidebar.svelte";
   import Viewer from "./lib/components/reader/Viewer.svelte";
+  import ContextMenu from "./lib/components/common/ContextMenu.svelte";
 
   // Open files handed to us by the OS (Finder "Open With", double-click).
   // Returns whether a file was opened.
@@ -77,6 +78,8 @@
     </div>
   {/if}
 {/if}
+
+<ContextMenu />
 
 <style>
   .app {
