@@ -76,6 +76,7 @@ pub fn run() {
                 store: Mutex::new(store),
                 pdf,
                 watcher: Mutex::new(watcher),
+                open_cancel: Mutex::new(None),
             });
             Ok(())
         })

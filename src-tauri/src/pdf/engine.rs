@@ -5,11 +5,17 @@
 use crate::error::{AppError, Result};
 use pdfium_render::prelude::*;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use tokio::sync::oneshot;
+
+/// Set to true to make the worker skip a queued `Open` when it is dequeued.
+/// The queue is FIFO and a pdfium call can't be interrupted, so this is how
+/// a stale open (user already switched to another file) is cancelled.
+pub type CancelFlag = Arc<AtomicBool>;
 
 /// Page dimensions in PDF points (1/72 inch).
 #[derive(Debug, Clone, Serialize)]
@@ -32,6 +38,7 @@ type RenderCallback = Box<dyn FnOnce(Result<Vec<u8>>) + Send>;
 enum Request {
     Open {
         path: PathBuf,
+        cancel: Option<CancelFlag>,
         reply: oneshot::Sender<Result<OpenInfo>>,
     },
     Render {
@@ -58,22 +65,31 @@ enum Request {
 #[derive(Clone)]
 pub struct PdfWorker {
     tx: mpsc::Sender<Request>,
+    /// Docs whose `Close` is still queued behind other work; lets the worker
+    /// skip their queued renders instead of rendering pages nobody will see.
+    closing: Arc<Mutex<HashSet<u64>>>,
 }
 
 impl PdfWorker {
     pub fn spawn(library_dirs: Vec<PathBuf>) -> Self {
         let (tx, rx) = mpsc::channel();
+        let closing = Arc::new(Mutex::new(HashSet::new()));
+        let worker_closing = closing.clone();
         thread::Builder::new()
             .name("pdf-worker".into())
-            .spawn(move || worker_loop(rx, library_dirs))
+            .spawn(move || worker_loop(rx, library_dirs, worker_closing))
             .expect("failed to spawn pdf worker thread");
-        Self { tx }
+        Self { tx, closing }
     }
 
-    pub async fn open(&self, path: PathBuf) -> Result<OpenInfo> {
+    pub async fn open_cancellable(
+        &self,
+        path: PathBuf,
+        cancel: Option<CancelFlag>,
+    ) -> Result<OpenInfo> {
         let (reply, rx) = oneshot::channel();
         self.tx
-            .send(Request::Open { path, reply })
+            .send(Request::Open { path, cancel, reply })
             .map_err(|_| worker_gone())?;
         rx.await.map_err(|_| worker_gone())?
     }
@@ -129,6 +145,8 @@ impl PdfWorker {
     }
 
     pub fn close(&self, doc_id: u64) {
+        // Flag first so renders already queued ahead of the Close are skipped.
+        self.closing.lock().unwrap().insert(doc_id);
         let _ = self.tx.send(Request::Close { doc_id });
     }
 }
@@ -137,7 +155,11 @@ fn worker_gone() -> AppError {
     AppError::Message("PDF worker is not running".into())
 }
 
-fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
+fn worker_loop(
+    rx: mpsc::Receiver<Request>,
+    library_dirs: Vec<PathBuf>,
+    closing: Arc<Mutex<HashSet<u64>>>,
+) {
     // Leaking the Pdfium instance gives it a 'static lifetime so documents
     // borrowing it can be stored in the cache. It lives for the whole app anyway.
     let pdfium: std::result::Result<&'static Pdfium, String> = match init_pdfium(&library_dirs) {
@@ -148,12 +170,34 @@ fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
     let mut docs: HashMap<u64, PdfDocument<'static>> = HashMap::new();
     let mut next_id: u64 = 1;
 
+    // Fails fast for docs that are closing, so work queued ahead of a Close
+    // isn't performed for nothing.
+    fn get_doc<'a>(
+        docs: &'a HashMap<u64, PdfDocument<'static>>,
+        closing: &Mutex<HashSet<u64>>,
+        doc_id: u64,
+    ) -> Result<&'a PdfDocument<'static>> {
+        if closing.lock().unwrap().contains(&doc_id) {
+            return Err(AppError::Message(format!("document {doc_id} is closing")));
+        }
+        docs.get(&doc_id)
+            .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
+    }
+
     while let Ok(request) = rx.recv() {
         match request {
-            Request::Open { path, reply } => {
-                let result = match pdfium {
-                    Ok(pdfium) => open_document(pdfium, &path, &mut docs, &mut next_id),
-                    Err(ref e) => Err(AppError::Pdf(e.clone())),
+            Request::Open {
+                path,
+                cancel,
+                reply,
+            } => {
+                let result = if cancel.is_some_and(|c| c.load(Ordering::Relaxed)) {
+                    Err(AppError::Message("open cancelled".into()))
+                } else {
+                    match pdfium {
+                        Ok(pdfium) => open_document(pdfium, &path, &mut docs, &mut next_id),
+                        Err(ref e) => Err(AppError::Pdf(e.clone())),
+                    }
                 };
                 let _ = reply.send(result);
             }
@@ -163,9 +207,7 @@ fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
                 width,
                 reply,
             } => {
-                let result = docs
-                    .get(&doc_id)
-                    .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
+                let result = get_doc(&docs, &closing, doc_id)
                     .and_then(|doc| super::renderer::render_page_png(doc, page_index, width));
                 reply(result);
             }
@@ -174,9 +216,7 @@ fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
                 page_index,
                 reply,
             } => {
-                let result = docs
-                    .get(&doc_id)
-                    .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
+                let result = get_doc(&docs, &closing, doc_id)
                     .and_then(|doc| super::text::extract_text_runs(doc, page_index));
                 let _ = reply.send(result);
             }
@@ -185,14 +225,13 @@ fn worker_loop(rx: mpsc::Receiver<Request>, library_dirs: Vec<PathBuf>) {
                 page_index,
                 reply,
             } => {
-                let result = docs
-                    .get(&doc_id)
-                    .ok_or_else(|| AppError::Message(format!("unknown document {doc_id}")))
+                let result = get_doc(&docs, &closing, doc_id)
                     .and_then(|doc| super::links::extract_links(doc, page_index));
                 let _ = reply.send(result);
             }
             Request::Close { doc_id } => {
                 docs.remove(&doc_id);
+                closing.lock().unwrap().remove(&doc_id);
             }
         }
     }
@@ -277,7 +316,7 @@ mod tests {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
             .unwrap();
-        let info = runtime.block_on(worker.open(fixture)).expect("open fixture");
+        let info = runtime.block_on(worker.open_cancellable(fixture, None)).expect("open fixture");
         assert_eq!(info.page_count, 3);
         assert_eq!(info.pages.len(), 3);
         assert!((info.pages[0].width - 612.0).abs() < 0.5);
@@ -315,7 +354,7 @@ mod tests {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
             .unwrap();
-        let info = runtime.block_on(worker.open(fixture)).expect("open fixture");
+        let info = runtime.block_on(worker.open_cancellable(fixture, None)).expect("open fixture");
         assert_eq!(info.page_count, 2);
 
         let links = runtime
@@ -342,6 +381,23 @@ mod tests {
         worker.close(info.doc_id);
     }
 
+    /// An Open whose cancel flag is set by the time the worker dequeues it
+    /// is skipped without touching pdfium.
+    #[test]
+    fn cancelled_open_is_skipped() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample.pdf");
+        let worker = test_worker();
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let cancel: CancelFlag = Arc::new(AtomicBool::new(true));
+        let err = runtime
+            .block_on(worker.open_cancellable(fixture, Some(cancel)))
+            .expect_err("cancelled open should not succeed");
+        assert_eq!(err.to_string(), "open cancelled");
+    }
+
     /// Opening a corrupted/non-PDF file should fail with a friendly message
     /// rather than surfacing pdfium's internal error string.
     #[test]
@@ -353,7 +409,7 @@ mod tests {
             .build()
             .unwrap();
         let err = runtime
-            .block_on(worker.open(fixture))
+            .block_on(worker.open_cancellable(fixture, None))
             .expect_err("corrupt file should fail to open");
         assert_eq!(
             err.to_string(),

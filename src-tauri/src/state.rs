@@ -1,5 +1,5 @@
 use crate::library::watcher::LibraryWatcher;
-use crate::pdf::engine::PdfWorker;
+use crate::pdf::engine::{CancelFlag, PdfWorker};
 use crate::store::Store;
 use std::sync::Mutex;
 
@@ -7,6 +7,10 @@ pub struct AppState {
     pub store: Mutex<Store>,
     pub pdf: PdfWorker,
     pub watcher: Mutex<Option<LibraryWatcher>>,
+    /// Cancel flag of the most recent open. The app shows one document at a
+    /// time, so starting a new open cancels the previous one if it is still
+    /// waiting in the worker queue.
+    pub open_cancel: Mutex<Option<CancelFlag>>,
 }
 
 /// Files the OS asked us to open (Finder "Open With", double-click) that the

@@ -6,6 +6,8 @@ use crate::state::{AppState, PendingOpenFiles};
 use crate::store::FileState;
 use serde::Serialize;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 
@@ -19,7 +21,13 @@ pub struct OpenResult {
 
 #[tauri::command]
 pub async fn open_document(state: State<'_, AppState>, path: String) -> Result<OpenResult> {
-    let info = state.pdf.open(PathBuf::from(&path)).await?;
+    // Only one document is shown at a time: a newer open supersedes any
+    // previous one still waiting in the worker queue.
+    let cancel = Arc::new(AtomicBool::new(false));
+    if let Some(prev) = state.open_cancel.lock().unwrap().replace(cancel.clone()) {
+        prev.store(true, Ordering::Relaxed);
+    }
+    let info = state.pdf.open_cancellable(PathBuf::from(&path), Some(cancel)).await?;
 
     let mut store = state.store.lock().unwrap();
     let entry = store.files.entry(path).or_default();
