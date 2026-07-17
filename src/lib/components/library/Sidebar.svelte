@@ -6,6 +6,7 @@
   import { library } from "../../stores/library.svelte";
   import { settings } from "../../stores/settings.svelte";
   import { ui } from "../../stores/ui.svelte";
+  import { history } from "../../stores/history.svelte";
 
   const isMac = navigator.userAgent.includes("Mac");
   let searchEl = $state<HTMLInputElement>();
@@ -42,6 +43,24 @@
     >
       <Icon name="panel-left" />
     </button>
+    <div class="nav">
+      <button
+        class="icon-btn"
+        title="Back"
+        disabled={!history.canGoBack}
+        onclick={() => void history.goBack()}
+      >
+        <Icon name="arrow-left" />
+      </button>
+      <button
+        class="icon-btn"
+        title="Forward"
+        disabled={!history.canGoForward}
+        onclick={() => void history.goForward()}
+      >
+        <Icon name="arrow-right" />
+      </button>
+    </div>
   </header>
 
   <div class="search">
@@ -112,6 +131,12 @@
   aside.mac header {
     /* leave room for the macOS traffic lights (overlay title bar) */
     padding-left: 84px;
+  }
+
+  header .nav {
+    margin-left: auto;
+    display: flex;
+    gap: 2px;
   }
 
   .search {

@@ -1,5 +1,6 @@
 import * as api from "../api/commands";
 import type { Bookmark, PageSize } from "../api/types";
+import { history } from "./history.svelte";
 
 const SAVE_DEBOUNCE_MS = 800;
 
@@ -38,11 +39,19 @@ class ReaderStore {
   /** Position to restore, consumed by the Viewer once layout is ready. */
   pendingRestore: { page: number; offset: number } | null = null;
 
+  /** Jump within the open document (bookmarks, history), consumed by the Viewer. */
+  pendingJump = $state<{ page: number; offset: number } | null>(null);
+
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private lastPageOffset = 0;
 
-  async open(path: string) {
+  async open(
+    path: string,
+    opts?: { restore?: { page: number; offset: number }; fromHistory?: boolean },
+  ) {
     if (path === this.path) return;
+    // history-initiated opens are already in the history
+    if (!opts?.fromHistory) history.recordOpen(path);
     await this.flushSave();
     if (this.docId !== null) void api.closeDocument(this.docId);
 
@@ -52,6 +61,7 @@ class ReaderStore {
     this.bookmarks = [];
     this.error = null;
     this.loading = true;
+    this.pendingJump = null;
 
     try {
       const result = await api.openDocument(path);
@@ -60,13 +70,15 @@ class ReaderStore {
         void api.closeDocument(result.docId);
         return;
       }
+      const restore = opts?.restore ?? { page: result.state.page, offset: result.state.pageOffset };
       this.zoom = result.state.zoom;
-      this.currentPage = Math.min(Math.max(result.state.page, 1), result.pageCount || 1);
-      this.pendingRestore = { page: this.currentPage, offset: result.state.pageOffset };
-      this.lastPageOffset = result.state.pageOffset;
+      this.currentPage = Math.min(Math.max(restore.page, 1), result.pageCount || 1);
+      this.pendingRestore = { page: this.currentPage, offset: restore.offset };
+      this.lastPageOffset = restore.offset;
       this.bookmarks = result.state.bookmarks ?? [];
       this.pages = result.pages;
       this.docId = result.docId;
+      history.confirmOpen(path, { page: this.currentPage, offset: restore.offset });
       void api.setLastFile(path);
     } catch (e) {
       if (this.path === path) this.error = String(e);
@@ -85,11 +97,22 @@ class ReaderStore {
     this.bookmarks = [];
     this.error = null;
     this.loading = false;
+    this.pendingJump = null;
   }
 
   /** The current reading position, in the same anchor form as bookmarks. */
   get currentAnchor(): { page: number; offset: number } {
     return { page: this.currentPage, offset: this.lastPageOffset };
+  }
+
+  /** Programmatic jump within the open document (bookmarks, history). */
+  jumpTo(anchor: { page: number; offset: number }) {
+    if (this.docId === null) return;
+    this.pendingJump = { ...anchor };
+    // update eagerly so currentAnchor is truthful before the scroll event lands
+    this.currentPage = anchor.page;
+    this.lastPageOffset = anchor.offset;
+    this.scheduleSave();
   }
 
   addBookmark() {

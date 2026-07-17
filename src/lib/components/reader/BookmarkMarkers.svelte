@@ -5,6 +5,7 @@
   import Icon from "../common/Icon.svelte";
   import { reader } from "../../stores/reader.svelte";
   import { ui } from "../../stores/ui.svelte";
+  import { history } from "../../stores/history.svelte";
   import type { Bookmark } from "../../api/types";
 
   let {
@@ -12,13 +13,11 @@
     scrollTop,
     viewportHeight,
     gap,
-    scrollToAnchor,
   }: {
     layout: { items: { top: number; width: number; height: number }[]; totalHeight: number };
     scrollTop: number;
     viewportHeight: number;
     gap: number;
-    scrollToAnchor: (anchor: { page: number; offset: number }) => void;
   } = $props();
 
   const DRAG_THRESHOLD = 3;
@@ -76,7 +75,7 @@
       const anchor = anchorAtCanvasY(y);
       reader.moveBookmark(bm.id, anchor.page, anchor.offset);
     } else {
-      scrollToAnchor({ page: bm.page, offset: bm.pageOffset });
+      history.navigate({ page: bm.page, offset: bm.pageOffset });
     }
   }
 </script>

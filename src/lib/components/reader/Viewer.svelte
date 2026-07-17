@@ -7,6 +7,7 @@
   import EmptyState from "../common/EmptyState.svelte";
   import { reader } from "../../stores/reader.svelte";
   import { ui } from "../../stores/ui.svelte";
+  import { history } from "../../stores/history.svelte";
 
   const PT_TO_PX = 96 / 72; // 100% zoom = 96dpi CSS pixels for 72dpi PDF points
   const PADDING = 28;
@@ -149,6 +150,15 @@
     });
   });
 
+  // Same-document jumps requested via the store (bookmarks, history).
+  $effect(() => {
+    const jump = reader.pendingJump;
+    if (jump === null || reader.docId === null || !container) return;
+    scrollToAnchor(jump);
+    lastAnchor = jump;
+    reader.pendingJump = null;
+  });
+
   // Keep the reading position when the viewer is resized (fullscreen, window
   // resize, sidebar toggle): the fit-width layout rescales but scrollTop is a
   // pixel value, so re-derive it from the anchor.
@@ -180,6 +190,16 @@
     if (!container || layout.items.length === 0) return;
     const clamped = Math.min(Math.max(page, 1), layout.items.length);
     container.scrollTop = Math.max(0, layout.items[clamped - 1].top - 12);
+  }
+
+  // Internal PDF links are navigation jumps: they go into the history
+  // (unlike toolbar/keyboard paging, which behaves like scrolling). The
+  // anchor reproduces scrollToPage's landing (12px above the page top).
+  function followLink(page: number) {
+    const clamped = Math.min(Math.max(page, 1), layout.items.length);
+    const item = layout.items[clamped - 1];
+    if (!item) return;
+    history.navigate({ page: clamped, offset: -12 / item.height });
   }
 
   // ctrl/cmd + wheel zoom needs a non-passive listener to preventDefault
@@ -258,7 +278,7 @@
                 renderWidth={reader.pages[i].width * (renderScale || scale) * dpr}
                 pointWidth={reader.pages[i].width}
                 pointHeight={reader.pages[i].height}
-                goToPage={scrollToPage}
+                goToPage={followLink}
               />
             {/each}
           {/if}
@@ -271,13 +291,12 @@
           {scrollTop}
           viewportHeight={containerHeight}
           gap={GAP}
-          {scrollToAnchor}
         />
       {/if}
     </div>
 
     {#if ui.bookmarksPanelOpen && reader.docId !== null}
-      <BookmarksPanel {scrollToAnchor} />
+      <BookmarksPanel />
     {/if}
   </div>
 

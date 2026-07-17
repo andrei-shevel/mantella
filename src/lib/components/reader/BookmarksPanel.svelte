@@ -2,10 +2,7 @@
   import Icon from "../common/Icon.svelte";
   import BookmarkItem from "./BookmarkItem.svelte";
   import { reader } from "../../stores/reader.svelte";
-
-  let {
-    scrollToAnchor,
-  }: { scrollToAnchor: (anchor: { page: number; offset: number }) => void } = $props();
+  import { history } from "../../stores/history.svelte";
 </script>
 
 <aside>
@@ -24,7 +21,7 @@
     {#each reader.bookmarksSorted as bm (bm.id)}
       <BookmarkItem
         bookmark={bm}
-        onactivate={() => scrollToAnchor({ page: bm.page, offset: bm.pageOffset })}
+        onactivate={() => history.navigate({ page: bm.page, offset: bm.pageOffset })}
       />
     {/each}
     {#if reader.bookmarks.length === 0}
