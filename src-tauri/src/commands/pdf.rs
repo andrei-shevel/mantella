@@ -27,7 +27,10 @@ pub async fn open_document(state: State<'_, AppState>, path: String) -> Result<O
     if let Some(prev) = state.open_cancel.lock().unwrap().replace(cancel.clone()) {
         prev.store(true, Ordering::Relaxed);
     }
-    let info = state.pdf.open_cancellable(PathBuf::from(&path), Some(cancel)).await?;
+    let info = state
+        .pdf
+        .open_cancellable(PathBuf::from(&path), Some(cancel))
+        .await?;
 
     let mut store = state.store.lock().unwrap();
     let entry = store.files.entry(path).or_default();
@@ -68,10 +71,10 @@ pub async fn get_page_links(
 #[tauri::command]
 pub fn open_url(url: String) -> Result<()> {
     let allowed = ["http://", "https://", "mailto:"];
-    if !allowed
-        .iter()
-        .any(|p| url.get(..p.len()).is_some_and(|s| s.eq_ignore_ascii_case(p)))
-    {
+    if !allowed.iter().any(|p| {
+        url.get(..p.len())
+            .is_some_and(|s| s.eq_ignore_ascii_case(p))
+    }) {
         return Err(AppError::Message(format!("refusing to open link: {url}")));
     }
     open::that_detached(&url).map_err(|e| AppError::Message(format!("failed to open {url}: {e}")))

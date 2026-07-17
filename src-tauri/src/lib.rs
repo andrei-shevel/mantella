@@ -59,7 +59,9 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
     match file_menu {
         Some(file_menu) => file_menu.insert_items(&items, 0)?,
         None => {
-            let file_menu = SubmenuBuilder::new(app, "File").items(&items[..2]).build()?;
+            let file_menu = SubmenuBuilder::new(app, "File")
+                .items(&items[..2])
+                .build()?;
             // on macOS index 0 is the application menu
             let pos = if cfg!(target_os = "macos") { 1 } else { 0 };
             menu.insert(&file_menu, pos)?;
@@ -90,8 +92,9 @@ pub fn run() {
                 pdfium_dirs.push(resource_dir.join("pdfium"));
             }
             #[cfg(debug_assertions)]
-            pdfium_dirs
-                .push(std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/pdfium"));
+            pdfium_dirs.push(
+                std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/pdfium"),
+            );
 
             let pdf = pdf::engine::PdfWorker::spawn(pdfium_dirs);
 
@@ -109,16 +112,14 @@ pub fn run() {
             });
             Ok(())
         })
-        .on_menu_event(|app, event| {
-            match event.id().as_ref() {
-                "open-file" => {
-                    let _ = app.emit("menu-open-file", ());
-                }
-                "change-library-folder" => {
-                    let _ = app.emit("menu-change-folder", ());
-                }
-                _ => {}
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "open-file" => {
+                let _ = app.emit("menu-open-file", ());
             }
+            "change-library-folder" => {
+                let _ = app.emit("menu-change-folder", ());
+            }
+            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             commands::library::get_settings,

@@ -89,7 +89,11 @@ impl PdfWorker {
     ) -> Result<OpenInfo> {
         let (reply, rx) = oneshot::channel();
         self.tx
-            .send(Request::Open { path, cancel, reply })
+            .send(Request::Open {
+                path,
+                cancel,
+                reply,
+            })
             .map_err(|_| worker_gone())?;
         rx.await.map_err(|_| worker_gone())?
     }
@@ -316,7 +320,9 @@ mod tests {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
             .unwrap();
-        let info = runtime.block_on(worker.open_cancellable(fixture, None)).expect("open fixture");
+        let info = runtime
+            .block_on(worker.open_cancellable(fixture, None))
+            .expect("open fixture");
         assert_eq!(info.page_count, 3);
         assert_eq!(info.pages.len(), 3);
         assert!((info.pages[0].width - 612.0).abs() < 0.5);
@@ -354,7 +360,9 @@ mod tests {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
             .unwrap();
-        let info = runtime.block_on(worker.open_cancellable(fixture, None)).expect("open fixture");
+        let info = runtime
+            .block_on(worker.open_cancellable(fixture, None))
+            .expect("open fixture");
         assert_eq!(info.page_count, 2);
 
         let links = runtime

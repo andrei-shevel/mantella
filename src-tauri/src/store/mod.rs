@@ -25,7 +25,11 @@ impl Store {
             settings.last_file = None;
         }
         let files = read_json(&dir.join("files.json")).unwrap_or_default();
-        Self { dir, settings, files }
+        Self {
+            dir,
+            settings,
+            files,
+        }
     }
 
     pub fn save_settings(&self) -> Result<()> {

@@ -22,9 +22,11 @@ pub fn handle<R: tauri::Runtime>(
     };
 
     let state = ctx.app_handle().state::<AppState>();
-    state
-        .pdf
-        .render_with(doc_id, page_index, width, move |result: crate::error::Result<Vec<u8>>| match result {
+    state.pdf.render_with(
+        doc_id,
+        page_index,
+        width,
+        move |result: crate::error::Result<Vec<u8>>| match result {
             Ok(png) => {
                 let response = http::Response::builder()
                     .status(200)
@@ -35,7 +37,8 @@ pub fn handle<R: tauri::Runtime>(
                 responder.respond(response);
             }
             Err(e) => responder.respond(error_response(500, &e.to_string())),
-        });
+        },
+    );
 }
 
 fn parse(path: &str, query: Option<&str>) -> Option<(u64, u16, u32)> {
