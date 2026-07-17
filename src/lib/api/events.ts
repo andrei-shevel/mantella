@@ -3,7 +3,8 @@ import type { FileEntry } from "./types";
 
 export const onLibraryChanged = (
   callback: (files: FileEntry[]) => void,
-): Promise<UnlistenFn> => listen<FileEntry[]>("library-changed", (e) => callback(e.payload));
+): Promise<UnlistenFn> =>
+  listen<FileEntry[]>("library-changed", (e) => callback(e.payload));
 
 /** The OS asked us to open files; drain them via takePendingOpenFiles. */
 export const onOpenFile = (callback: () => void): Promise<UnlistenFn> =>

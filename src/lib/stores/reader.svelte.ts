@@ -15,7 +15,12 @@ class ReaderStore {
   error = $state<string | null>(null);
   bookmarks = $state<Bookmark[]>([]);
 
-  name = $derived(this.path?.split("/").pop()?.replace(/\.pdf$/i, "") ?? "");
+  name = $derived(
+    this.path
+      ?.split("/")
+      .pop()
+      ?.replace(/\.pdf$/i, "") ?? "",
+  );
 
   /**
    * Bookmarks in document order, for display. Offsets may be negative (an
@@ -47,7 +52,10 @@ class ReaderStore {
 
   async open(
     path: string,
-    opts?: { restore?: { page: number; offset: number }; fromHistory?: boolean },
+    opts?: {
+      restore?: { page: number; offset: number };
+      fromHistory?: boolean;
+    },
   ) {
     if (path === this.path) return;
     // history-initiated opens are already in the history
@@ -70,15 +78,24 @@ class ReaderStore {
         void api.closeDocument(result.docId);
         return;
       }
-      const restore = opts?.restore ?? { page: result.state.page, offset: result.state.pageOffset };
+      const restore = opts?.restore ?? {
+        page: result.state.page,
+        offset: result.state.pageOffset,
+      };
       this.zoom = result.state.zoom;
-      this.currentPage = Math.min(Math.max(restore.page, 1), result.pageCount || 1);
+      this.currentPage = Math.min(
+        Math.max(restore.page, 1),
+        result.pageCount || 1,
+      );
       this.pendingRestore = { page: this.currentPage, offset: restore.offset };
       this.lastPageOffset = restore.offset;
       this.bookmarks = result.state.bookmarks ?? [];
       this.pages = result.pages;
       this.docId = result.docId;
-      history.confirmOpen(path, { page: this.currentPage, offset: restore.offset });
+      history.confirmOpen(path, {
+        page: this.currentPage,
+        offset: restore.offset,
+      });
       void api.setLastFile(path);
     } catch (e) {
       if (this.path === path) this.error = String(e);
@@ -117,7 +134,12 @@ class ReaderStore {
 
   addBookmark() {
     const n =
-      Math.max(0, ...this.bookmarks.map((b) => Number(/^Bookmark #(\d+)$/.exec(b.title)?.[1] ?? 0))) + 1;
+      Math.max(
+        0,
+        ...this.bookmarks.map((b) =>
+          Number(/^Bookmark #(\d+)$/.exec(b.title)?.[1] ?? 0),
+        ),
+      ) + 1;
     const anchor = this.currentAnchor;
     this.bookmarks.push({
       id: crypto.randomUUID(),
@@ -151,9 +173,11 @@ class ReaderStore {
 
   private persistBookmarks() {
     if (!this.path) return;
-    void api.saveBookmarks(this.path, $state.snapshot(this.bookmarks)).catch(() => {
-      // best effort, like reading-position saves
-    });
+    void api
+      .saveBookmarks(this.path, $state.snapshot(this.bookmarks))
+      .catch(() => {
+        // best effort, like reading-position saves
+      });
   }
 
   reportScroll(page: number, pageOffset: number) {
@@ -180,7 +204,12 @@ class ReaderStore {
     }
     if (!this.path || this.docId === null) return;
     try {
-      await api.saveReadingState(this.path, this.currentPage, this.lastPageOffset, this.zoom);
+      await api.saveReadingState(
+        this.path,
+        this.currentPage,
+        this.lastPageOffset,
+        this.zoom,
+      );
     } catch {
       // best effort; losing one position save is fine
     }

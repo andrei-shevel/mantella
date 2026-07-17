@@ -14,7 +14,10 @@
     viewportHeight,
     gap,
   }: {
-    layout: { items: { top: number; width: number; height: number }[]; totalHeight: number };
+    layout: {
+      items: { top: number; width: number; height: number }[];
+      totalHeight: number;
+    };
     scrollTop: number;
     viewportHeight: number;
     gap: number;
@@ -23,7 +26,12 @@
   const DRAG_THRESHOLD = 3;
 
   let railEl = $state<HTMLDivElement>();
-  let drag = $state<{ id: string; y: number; moved: boolean; startClientY: number } | null>(null);
+  let drag = $state<{
+    id: string;
+    y: number;
+    moved: boolean;
+    startClientY: number;
+  } | null>(null);
 
   function canvasY(bm: Bookmark): number {
     const items = layout.items;
@@ -39,7 +47,10 @@
     const clamped = Math.max(items[0].top, Math.min(y, last.top + last.height));
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (clamped < item.top + item.height + gap / 2 || i === items.length - 1) {
+      if (
+        clamped < item.top + item.height + gap / 2 ||
+        i === items.length - 1
+      ) {
         return {
           page: i + 1,
           offset: Math.max(0, Math.min(1, (clamped - item.top) / item.height)),
@@ -59,7 +70,8 @@
 
   function onPointerMove(e: PointerEvent, bm: Bookmark) {
     if (!drag || drag.id !== bm.id || !railEl) return;
-    if (!drag.moved && Math.abs(e.clientY - drag.startClientY) < DRAG_THRESHOLD) return;
+    if (!drag.moved && Math.abs(e.clientY - drag.startClientY) < DRAG_THRESHOLD)
+      return;
     drag.moved = true;
     const y = e.clientY - railEl.getBoundingClientRect().top + scrollTop;
     const anchor = anchorAtCanvasY(y);
@@ -100,7 +112,11 @@
           onpointercancel={() => (drag = null)}
           oncontextmenu={(e) =>
             ui.openContextMenu(e, [
-              { label: "Remove", danger: true, action: () => reader.removeBookmark(bm.id) },
+              {
+                label: "Remove",
+                danger: true,
+                action: () => reader.removeBookmark(bm.id),
+              },
             ])}
         >
           <Icon name="bookmark" size={14} filled />

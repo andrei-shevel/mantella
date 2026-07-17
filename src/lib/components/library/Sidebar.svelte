@@ -165,7 +165,9 @@
   }
 
   .search input:focus {
-    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 0 1px var(--accent) inset;
+    box-shadow:
+      0 0 0 2px var(--accent-soft),
+      0 0 0 1px var(--accent) inset;
   }
 
   .search input::placeholder {

@@ -12,13 +12,13 @@ A fast, minimal desktop PDF reader built with **Tauri 2**, **Svelte 5**, and **p
 
 ### Shortcuts
 
-| Keys | Action |
-|---|---|
-| ⌘F | Focus file search |
-| ←/→, PgUp/PgDn | Previous / next page |
-| ⌘+ / ⌘− | Zoom in / out |
-| ⌘0 | Fit to width |
-| ⌘/Ctrl + scroll | Zoom |
+| Keys            | Action               |
+| --------------- | -------------------- |
+| ⌘F              | Focus file search    |
+| ←/→, PgUp/PgDn  | Previous / next page |
+| ⌘+ / ⌘−         | Zoom in / out        |
+| ⌘0              | Fit to width         |
+| ⌘/Ctrl + scroll | Zoom                 |
 
 ## Development
 

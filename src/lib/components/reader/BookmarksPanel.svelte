@@ -21,7 +21,8 @@
     {#each reader.bookmarksSorted as bm (bm.id)}
       <BookmarkItem
         bookmark={bm}
-        onactivate={() => history.navigate({ page: bm.page, offset: bm.pageOffset })}
+        onactivate={() =>
+          history.navigate({ page: bm.page, offset: bm.pageOffset })}
       />
     {/each}
     {#if reader.bookmarks.length === 0}

@@ -28,7 +28,7 @@
 {/each}
 
 {#each node.files as file (file.path)}
-  <FileItem {file} depth={depth} showDir={false} />
+  <FileItem {file} {depth} showDir={false} />
 {/each}
 
 <style>

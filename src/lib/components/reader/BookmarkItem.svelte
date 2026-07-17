@@ -4,7 +4,8 @@
   import { ui } from "../../stores/ui.svelte";
   import type { Bookmark } from "../../api/types";
 
-  let { bookmark, onactivate }: { bookmark: Bookmark; onactivate: () => void } = $props();
+  let { bookmark, onactivate }: { bookmark: Bookmark; onactivate: () => void } =
+    $props();
 
   let editing = $state(false);
   let draft = $state("");
@@ -48,7 +49,11 @@
   oncontextmenu={(e) =>
     ui.openContextMenu(e, [
       { label: "Rename", action: startEditing },
-      { label: "Remove", danger: true, action: () => reader.removeBookmark(bookmark.id) },
+      {
+        label: "Remove",
+        danger: true,
+        action: () => reader.removeBookmark(bookmark.id),
+      },
     ])}
 >
   <span class="mark-icon"><Icon name="bookmark" size={13} /></span>

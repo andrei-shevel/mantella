@@ -3,7 +3,11 @@
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { open } from "@tauri-apps/plugin-dialog";
   import { takePendingOpenFiles } from "./lib/api/commands";
-  import { onMenuChangeFolder, onMenuOpenFile, onOpenFile } from "./lib/api/events";
+  import {
+    onMenuChangeFolder,
+    onMenuOpenFile,
+    onOpenFile,
+  } from "./lib/api/events";
   import { settings } from "./lib/stores/settings.svelte";
   import { library } from "./lib/stores/library.svelte";
   import { reader } from "./lib/stores/reader.svelte";

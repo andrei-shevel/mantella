@@ -93,8 +93,10 @@ if (source.width !== source.height) throw new Error("source must be square");
 function roundedRectAlpha(x, y, x0, y0, x1, y1, r) {
   const cx = Math.max(x0 + r, Math.min(x, x1 - r));
   const cy = Math.max(y0 + r, Math.min(y, y1 - r));
-  if (x >= x0 + r && x <= x1 - r) return x >= x0 && x <= x1 && y >= y0 && y <= y1 ? 1 : 0;
-  if (y >= y0 + r && y <= y1 - r) return x >= x0 && x <= x1 && y >= y0 && y <= y1 ? 1 : 0;
+  if (x >= x0 + r && x <= x1 - r)
+    return x >= x0 && x <= x1 && y >= y0 && y <= y1 ? 1 : 0;
+  if (y >= y0 + r && y <= y1 - r)
+    return x >= x0 && x <= x1 && y >= y0 && y <= y1 ? 1 : 0;
   const d = Math.hypot(x - cx, y - cy);
   return Math.max(0, Math.min(1, r - d + 0.5));
 }
@@ -125,7 +127,15 @@ const px = Buffer.alloc(SIZE * SIZE * 4);
 for (let y = 0; y < SIZE; y++) {
   for (let x = 0; x < SIZE; x++) {
     const i = (y * SIZE + x) * 4;
-    const a = roundedRectAlpha(x, y, MARGIN, MARGIN, SIZE - 1 - MARGIN, SIZE - 1 - MARGIN, CORNER_R);
+    const a = roundedRectAlpha(
+      x,
+      y,
+      MARGIN,
+      MARGIN,
+      SIZE - 1 - MARGIN,
+      SIZE - 1 - MARGIN,
+      CORNER_R,
+    );
     if (a > 0) {
       const [r, g, b] = sampleSource(x, y);
       px[i] = Math.round(r);
@@ -138,7 +148,8 @@ for (let y = 0; y < SIZE; y++) {
 
 // --- minimal PNG encoder ---
 function crc32(buf) {
-  let c, crc = 0xffffffff;
+  let c,
+    crc = 0xffffffff;
   for (let n = 0; n < buf.length; n++) {
     c = (crc ^ buf[n]) & 0xff;
     for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;

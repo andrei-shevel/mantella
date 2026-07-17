@@ -57,7 +57,8 @@ export function withHitPadding(
   // into the page margins.
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const above = i > 0 ? Math.max(0, line.top - lines[i - 1].bottom) / 2 : line.top;
+    const above =
+      i > 0 ? Math.max(0, line.top - lines[i - 1].bottom) / 2 : line.top;
     const below =
       i < lines.length - 1
         ? Math.max(0, lines[i + 1].top - line.bottom) / 2

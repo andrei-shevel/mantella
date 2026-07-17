@@ -7,7 +7,9 @@ export interface MenuItem {
 class UiStore {
   sidebarOpen = $state(true);
   bookmarksPanelOpen = $state(false);
-  contextMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  contextMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(
+    null,
+  );
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;

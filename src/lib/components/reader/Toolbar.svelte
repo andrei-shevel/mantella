@@ -41,9 +41,17 @@
   }
 </script>
 
-<div class="toolbar" class:pad-mac={isMac && !ui.sidebarOpen} data-tauri-drag-region>
+<div
+  class="toolbar"
+  class:pad-mac={isMac && !ui.sidebarOpen}
+  data-tauri-drag-region
+>
   {#if !ui.sidebarOpen}
-    <button class="icon-btn" title="Toggle sidebar" onclick={() => ui.toggleSidebar()}>
+    <button
+      class="icon-btn"
+      title="Toggle sidebar"
+      onclick={() => ui.toggleSidebar()}
+    >
       <Icon name="panel-left" />
     </button>
   {/if}
@@ -77,13 +85,21 @@
     </div>
 
     <div class="zoom">
-      <button class="icon-btn" title="Zoom out (⌘−)" onclick={() => zoomBy(1 / 1.15)}>
+      <button
+        class="icon-btn"
+        title="Zoom out (⌘−)"
+        onclick={() => zoomBy(1 / 1.15)}
+      >
         <Icon name="minus" />
       </button>
       <button class="pct" title="Reset to 100%" onclick={() => setZoom(1)}>
         {zoomPercent}%
       </button>
-      <button class="icon-btn" title="Zoom in (⌘+)" onclick={() => zoomBy(1.15)}>
+      <button
+        class="icon-btn"
+        title="Zoom in (⌘+)"
+        onclick={() => zoomBy(1.15)}
+      >
         <Icon name="plus" />
       </button>
       <button
@@ -107,7 +123,11 @@
   {/if}
 
   {#if reader.path !== null}
-    <button class="icon-btn" title="Close document" onclick={() => void closeDoc()}>
+    <button
+      class="icon-btn"
+      title="Close document"
+      onclick={() => void closeDoc()}
+    >
       <Icon name="x" />
     </button>
   {/if}

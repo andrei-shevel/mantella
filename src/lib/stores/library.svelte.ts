@@ -16,7 +16,9 @@ const EXPANDED_KEY = "mantella.expanded-dirs";
 function loadExpanded(): string[] {
   try {
     // fall back to the pre-rename key so expanded state carries over
-    const raw = localStorage.getItem(EXPANDED_KEY) ?? localStorage.getItem("magpie.expanded-dirs");
+    const raw =
+      localStorage.getItem(EXPANDED_KEY) ??
+      localStorage.getItem("magpie.expanded-dirs");
     return JSON.parse(raw ?? "[]");
   } catch {
     return [];
@@ -32,7 +34,12 @@ function buildTree(files: FileEntry[]): DirNode {
     if (existing) return existing;
     const slash = relPath.lastIndexOf("/");
     const parent = ensureDir(slash === -1 ? "" : relPath.slice(0, slash));
-    const node: DirNode = { name: relPath.slice(slash + 1), relPath, dirs: [], files: [] };
+    const node: DirNode = {
+      name: relPath.slice(slash + 1),
+      relPath,
+      dirs: [],
+      files: [],
+    };
     parent.dirs.push(node);
     dirMap.set(relPath, node);
     return node;
@@ -40,7 +47,9 @@ function buildTree(files: FileEntry[]): DirNode {
 
   for (const file of files) {
     const slash = file.relPath.lastIndexOf("/");
-    ensureDir(slash === -1 ? "" : file.relPath.slice(0, slash)).files.push(file);
+    ensureDir(slash === -1 ? "" : file.relPath.slice(0, slash)).files.push(
+      file,
+    );
   }
 
   const sortDirs = (node: DirNode) => {

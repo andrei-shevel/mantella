@@ -3,6 +3,10 @@
 const isWindows = navigator.userAgent.includes("Windows");
 const BASE = isWindows ? "http://mantella.localhost" : "mantella://localhost";
 
-export function pageUrl(docId: number, pageIndex: number, pixelWidth: number): string {
+export function pageUrl(
+  docId: number,
+  pageIndex: number,
+  pixelWidth: number,
+): string {
   return `${BASE}/${docId}/${pageIndex}?w=${Math.max(16, Math.round(pixelWidth))}`;
 }

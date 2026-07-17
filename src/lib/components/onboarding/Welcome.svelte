@@ -24,7 +24,9 @@
       Pick the folder where you keep your PDFs. It will be scanned — subfolders
       included — and kept in sync automatically as files come and go.
     </p>
-    <button class="primary" onclick={choose} disabled={busy}>Choose Folder…</button>
+    <button class="primary" onclick={choose} disabled={busy}>
+      Choose Folder…
+    </button>
   </div>
 </div>
 

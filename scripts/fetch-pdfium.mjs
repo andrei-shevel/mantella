@@ -8,7 +8,13 @@
  *   node scripts/fetch-pdfium.mjs --target mac-arm64|mac-x64|win-x64|linux-x64|linux-arm64
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, copyFileSync, existsSync, mkdtempSync } from "node:fs";
+import {
+  mkdirSync,
+  rmSync,
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,7 +45,9 @@ const argIdx = process.argv.indexOf("--target");
 const target = argIdx !== -1 ? process.argv[argIdx + 1] : detectTarget();
 const spec = TARGETS[target];
 if (!spec) {
-  console.error(`Unknown target "${target}". Valid: ${Object.keys(TARGETS).join(", ")}`);
+  console.error(
+    `Unknown target "${target}". Valid: ${Object.keys(TARGETS).join(", ")}`,
+  );
   process.exit(1);
 }
 
@@ -48,7 +56,9 @@ const destDir = join(root, "src-tauri", "resources", "pdfium");
 const destLib = join(destDir, spec.lib.split("/").pop());
 
 if (existsSync(destLib) && !process.argv.includes("--force")) {
-  console.log(`pdfium already present at ${destLib} (use --force to re-download)`);
+  console.log(
+    `pdfium already present at ${destLib} (use --force to re-download)`,
+  );
   process.exit(0);
 }
 
@@ -65,7 +75,8 @@ try {
 
   execFileSync("tar", ["-xzf", archivePath, "-C", work]);
   const extracted = join(work, spec.lib);
-  if (!existsSync(extracted)) throw new Error(`Archive did not contain ${spec.lib}`);
+  if (!existsSync(extracted))
+    throw new Error(`Archive did not contain ${spec.lib}`);
 
   mkdirSync(destDir, { recursive: true });
   copyFileSync(extracted, destLib);

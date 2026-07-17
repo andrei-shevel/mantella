@@ -44,7 +44,9 @@
   let containerHeight = $state(0);
   let scrollTop = $state(0);
 
-  let maxPageWidth = $derived(reader.pages.reduce((m, p) => Math.max(m, p.width), 0) || 612);
+  let maxPageWidth = $derived(
+    reader.pages.reduce((m, p) => Math.max(m, p.width), 0) || 612,
+  );
 
   /** CSS pixels per PDF point at the current zoom (fit-width when zoom is null). */
   let scale = $derived(
@@ -168,7 +170,12 @@
     if (width === prevWidth) return;
     const isFirstMeasure = prevWidth === 0;
     prevWidth = width;
-    if (isFirstMeasure || reader.docId === null || reader.pendingRestore !== null) return;
+    if (
+      isFirstMeasure ||
+      reader.docId === null ||
+      reader.pendingRestore !== null
+    )
+      return;
     const anchor = lastAnchor;
     void tick().then(() => scrollToAnchor(anchor));
   });
@@ -183,7 +190,9 @@
 
   function zoomBy(factor: number) {
     const current = reader.zoom ?? scale / PT_TO_PX;
-    setZoomPreservingPosition(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, current * factor)));
+    setZoomPreservingPosition(
+      Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, current * factor)),
+    );
   }
 
   function scrollToPage(page: number) {
@@ -266,7 +275,10 @@
         bind:clientHeight={containerHeight}
         onscroll={onScroll}
       >
-        <div class="canvas" style="height: {layout.totalHeight}px; width: {contentWidth}px">
+        <div
+          class="canvas"
+          style="height: {layout.totalHeight}px; width: {contentWidth}px"
+        >
           {#if reader.docId !== null}
             {#each visible as i (i)}
               <Page
@@ -275,7 +287,9 @@
                 top={layout.items[i].top}
                 width={layout.items[i].width}
                 height={layout.items[i].height}
-                renderWidth={reader.pages[i].width * (renderScale || scale) * dpr}
+                renderWidth={reader.pages[i].width *
+                  (renderScale || scale) *
+                  dpr}
                 pointWidth={reader.pages[i].width}
                 pointHeight={reader.pages[i].height}
                 goToPage={followLink}
@@ -305,7 +319,11 @@
       {#if reader.loading}
         <div class="spinner" aria-label="Loading"></div>
       {:else if reader.error}
-        <EmptyState icon="file" title="Couldn't open this file" subtitle={reader.error} />
+        <EmptyState
+          icon="file"
+          title="Couldn't open this file"
+          subtitle={reader.error}
+        />
       {:else}
         <EmptyState
           icon="file"

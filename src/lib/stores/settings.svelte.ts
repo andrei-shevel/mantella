@@ -16,7 +16,10 @@ class SettingsStore {
 
   /** Opens the native folder picker; returns the fresh file list on success. */
   async chooseLibraryFolder(): Promise<FileEntry[] | null> {
-    const dir = await open({ directory: true, title: "Choose your PDF folder" });
+    const dir = await open({
+      directory: true,
+      title: "Choose your PDF folder",
+    });
     if (typeof dir !== "string") return null;
     const files = await api.setLibraryFolder(dir);
     this.libraryPath = dir;

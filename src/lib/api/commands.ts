@@ -1,5 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Bookmark, FileEntry, OpenResult, PageLink, Settings, TextRun } from "./types";
+import type {
+  Bookmark,
+  FileEntry,
+  OpenResult,
+  PageLink,
+  Settings,
+  TextRun,
+} from "./types";
 
 export const getSettings = () => invoke<Settings>("get_settings");
 
@@ -11,13 +18,17 @@ export const getLibrary = () => invoke<FileEntry[]>("get_library");
 export const setPinned = (path: string, pinned: boolean) =>
   invoke<void>("set_pinned", { path, pinned });
 
-export const setLastFile = (path: string | null) => invoke<void>("set_last_file", { path });
+export const setLastFile = (path: string | null) =>
+  invoke<void>("set_last_file", { path });
 
-export const openDocument = (path: string) => invoke<OpenResult>("open_document", { path });
+export const openDocument = (path: string) =>
+  invoke<OpenResult>("open_document", { path });
 
-export const takePendingOpenFiles = () => invoke<string[]>("take_pending_open_files");
+export const takePendingOpenFiles = () =>
+  invoke<string[]>("take_pending_open_files");
 
-export const closeDocument = (docId: number) => invoke<void>("close_document", { docId });
+export const closeDocument = (docId: number) =>
+  invoke<void>("close_document", { docId });
 
 export const getPageText = (docId: number, pageIndex: number) =>
   invoke<TextRun[]>("get_page_text", { docId, pageIndex });

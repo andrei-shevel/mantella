@@ -97,7 +97,8 @@ class HistoryStore {
    */
   private materializeDrift(): boolean {
     const current = this.entries[this.idx];
-    if (!current || reader.path !== current.path || reader.docId === null) return false;
+    if (!current || reader.path !== current.path || reader.docId === null)
+      return false;
     const live = { ...reader.currentAnchor };
     if (current.anchor === null) {
       // open never confirmed (e.g. it errored before loading finished, then

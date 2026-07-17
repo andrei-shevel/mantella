@@ -7,7 +7,11 @@
   // scrolls in and out.
   const PAGE_CACHE_MAX = 400;
 
-  function cached<T>(cache: Map<string, Promise<T>>, key: string, fetch: () => Promise<T>) {
+  function cached<T>(
+    cache: Map<string, Promise<T>>,
+    key: string,
+    fetch: () => Promise<T>,
+  ) {
     let promise = cache.get(key);
     if (!promise) {
       promise = fetch();
