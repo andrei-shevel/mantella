@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Icon from "./Icon.svelte";
+  import Icon, { type IconName } from "./Icon.svelte";
 
   let {
     icon,
     title,
     subtitle = "",
-  }: { icon: string; title: string; subtitle?: string } = $props();
+  }: { icon: IconName; title: string; subtitle?: string } = $props();
 </script>
 
 <div class="empty">
