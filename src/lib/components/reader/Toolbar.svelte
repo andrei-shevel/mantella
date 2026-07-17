@@ -159,6 +159,8 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    flex-shrink: 0;
+    white-space: nowrap;
     color: var(--text-2);
   }
 
@@ -185,6 +187,7 @@
     display: flex;
     align-items: center;
     gap: 1px;
+    flex-shrink: 0;
   }
 
   .pct {
