@@ -7,7 +7,10 @@ mod store;
 
 use state::{AppState, PendingOpenFiles};
 use std::sync::Mutex;
-use tauri::menu::{IsMenuItem, Menu, MenuItemBuilder, MenuItemKind, PredefinedMenuItem, SubmenuBuilder};
+use tauri::menu::{
+    AboutMetadataBuilder, IsMenuItem, Menu, MenuItemBuilder, MenuItemKind, PredefinedMenuItem,
+    SubmenuBuilder,
+};
 use tauri::{Emitter, Manager};
 
 /// Adds our items to the top of the default menu's File submenu
@@ -23,6 +26,32 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
     let items: [&dyn IsMenuItem<_>; 3] = [&open, &change, &separator];
 
     let menu = Menu::default(app.handle())?;
+
+    // The default About item carries no icon, so the native About panel shows
+    // a placeholder in dev builds. Rebuild it with metadata that includes the
+    // app icon; the panel renders the bitmap at its pixel size, so use the
+    // largest one we bundle.
+    let pkg = app.package_info();
+    let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).ok();
+    let about_metadata = AboutMetadataBuilder::new()
+        .name(Some(pkg.name.clone()))
+        .version(Some(pkg.version.to_string()))
+        .icon(icon)
+        .build();
+    for item in menu.items()? {
+        let MenuItemKind::Submenu(sub) = item else {
+            continue;
+        };
+        let about_pos = sub.items()?.iter().position(|item| {
+            matches!(item, MenuItemKind::Predefined(p) if p.text().is_ok_and(|t| t.starts_with("About")))
+        });
+        if let Some(pos) = about_pos {
+            sub.remove_at(pos)?;
+            let about = PredefinedMenuItem::about(app, None, Some(about_metadata))?;
+            sub.insert(&about, pos)?;
+            break;
+        }
+    }
     let file_menu = menu.items()?.into_iter().find_map(|item| match item {
         MenuItemKind::Submenu(sub) if sub.text().is_ok_and(|t| t == "File") => Some(sub),
         _ => None,
