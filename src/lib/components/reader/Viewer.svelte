@@ -239,10 +239,16 @@
     } else if (meta && e.key === "0") {
       e.preventDefault();
       setZoomPreservingPosition(null);
-    } else if (e.key === "ArrowRight" || e.key === "PageDown") {
+    } else if (meta && e.key === "ArrowDown") {
       e.preventDefault();
       scrollToPage(reader.currentPage + 1);
-    } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+    } else if (meta && e.key === "ArrowUp") {
+      e.preventDefault();
+      scrollToPage(reader.currentPage - 1);
+    } else if (e.key === "PageDown") {
+      e.preventDefault();
+      scrollToPage(reader.currentPage + 1);
+    } else if (e.key === "PageUp") {
       e.preventDefault();
       scrollToPage(reader.currentPage - 1);
     } else if (e.key === "Home") {

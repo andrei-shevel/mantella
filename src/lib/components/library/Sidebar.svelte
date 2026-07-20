@@ -38,7 +38,7 @@
   <header data-tauri-drag-region>
     <button
       class="icon-btn"
-      title="Toggle sidebar"
+      title="Toggle sidebar (⌘←)"
       onclick={() => ui.toggleSidebar()}
     >
       <Icon name="panel-left" />

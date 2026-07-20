@@ -49,7 +49,7 @@
   {#if !ui.sidebarOpen}
     <button
       class="icon-btn"
-      title="Toggle sidebar"
+      title="Toggle sidebar (⌘←)"
       onclick={() => ui.toggleSidebar()}
     >
       <Icon name="panel-left" />
@@ -115,7 +115,7 @@
     <button
       class="icon-btn"
       class:on={ui.bookmarksPanelOpen}
-      title="Bookmarks"
+      title="Bookmarks (⌘→)"
       onclick={() => ui.toggleBookmarksPanel()}
     >
       <Icon name="bookmark" size={15} />

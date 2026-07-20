@@ -41,6 +41,27 @@
     if (files) library.setFiles(files);
   }
 
+  function onGlobalKeydown(e: KeyboardEvent) {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+    const meta = e.metaKey || e.ctrlKey;
+    if (!meta) return;
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      ui.toggleSidebar();
+    } else if (e.key === "ArrowRight") {
+      if (reader.docId === null) return; // no doc open: true no-op
+      e.preventDefault();
+      ui.toggleBookmarksPanel();
+    } else if (e.key >= "1" && e.key <= "9") {
+      const file = library.pinned[Number(e.key) - 1];
+      if (!file) return; // out of range: no-op, not an error
+      e.preventDefault();
+      void reader.open(file.path);
+    }
+  }
+
   onMount(() => {
     const unlisteners: (() => void)[] = [];
     void (async () => {
@@ -67,6 +88,8 @@
     };
   });
 </script>
+
+<svelte:window onkeydown={onGlobalKeydown} />
 
 {#if settings.ready}
   {#if !settings.libraryPath && !reader.path}
