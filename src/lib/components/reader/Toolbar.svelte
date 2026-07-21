@@ -58,7 +58,7 @@
 
   <span class="title" data-tauri-drag-region>{reader.name}</span>
 
-  {#if reader.path !== null}
+  {#if hasDoc}
     {@const pinned = currentFile?.pinned ?? false}
     <button
       class="icon-btn pin"
