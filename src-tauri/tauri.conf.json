@@ -30,6 +30,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "fileAssociations": [
       {
         "ext": ["pdf"],
@@ -47,6 +48,14 @@
     ],
     "resources": {
       "resources/pdfium/": "pdfium/"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE5Mzc3QTEyNUQ3RjMxNUUKUldSZU1YOWRFbm8zR1FoVTVrVjJGQVRmdnMyS2pFNXNxMmxkTXFlbk1mU0M1RTd2MXF0UVpzbTIK",
+      "endpoints": [
+        "https://github.com/andrei-shevel/mantella/releases/latest/download/latest.json"
+      ]
     }
   }
 }

@@ -8,14 +8,18 @@ mod store;
 use state::{AppState, PendingOpenFiles};
 use std::sync::Mutex;
 use tauri::menu::{
-    AboutMetadataBuilder, IsMenuItem, Menu, MenuItemBuilder, MenuItemKind, PredefinedMenuItem,
-    SubmenuBuilder,
+    AboutMetadataBuilder, IsMenuItem, Menu, MenuItem, MenuItemBuilder, MenuItemKind,
+    PredefinedMenuItem, SubmenuBuilder,
 };
 use tauri::{Emitter, Manager};
 
+/// Native "Check for Updates…" item — enabled/disabled from the frontend while a
+/// check or install is in flight.
+struct CheckUpdatesMenuItem(MenuItem<tauri::Wry>);
+
 /// Adds our items to the top of the default menu's File submenu
 /// (creating one if the platform's default menu has none).
-fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
+fn setup_menu(app: &tauri::App) -> tauri::Result<MenuItem<tauri::Wry>> {
     let open = MenuItemBuilder::with_id("open-file", "Open PDF…")
         .accelerator("CmdOrCtrl+O")
         .build(app)?;
@@ -25,6 +29,8 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
     let settings = MenuItemBuilder::with_id("open-settings", "Settings…")
         .accelerator("CmdOrCtrl+,")
         .build(app)?;
+    let check_updates =
+        MenuItemBuilder::with_id("check-updates", "Check for Updates…").build(app)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let items: [&dyn IsMenuItem<_>; 3] = [&open, &change, &separator];
 
@@ -41,9 +47,9 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
         .version(Some(pkg.version.to_string()))
         .icon(icon)
         .build();
-    // Settings lives in the app menu (next to About), matching macOS convention;
-    // on platforms with no such menu it falls back to the File menu below.
-    let mut settings_placed = false;
+    // Settings / Check for Updates live in the app menu (next to About), matching
+    // macOS convention; on platforms with no such menu they fall back to File.
+    let mut app_items_placed = false;
     for item in menu.items()? {
         let MenuItemKind::Submenu(sub) = item else {
             continue;
@@ -56,7 +62,8 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
             let about = PredefinedMenuItem::about(app, None, Some(about_metadata))?;
             sub.insert(&about, pos)?;
             sub.insert(&settings, pos + 1)?;
-            settings_placed = true;
+            sub.insert(&check_updates, pos + 2)?;
+            app_items_placed = true;
             break;
         }
     }
@@ -67,14 +74,15 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
     match file_menu {
         Some(file_menu) => {
             file_menu.insert_items(&items, 0)?;
-            if !settings_placed {
+            if !app_items_placed {
                 file_menu.append(&settings)?;
+                file_menu.append(&check_updates)?;
             }
         }
         None => {
             let mut builder = SubmenuBuilder::new(app, "File").items(&items[..2]);
-            if !settings_placed {
-                builder = builder.item(&settings);
+            if !app_items_placed {
+                builder = builder.item(&settings).item(&check_updates);
             }
             let file_menu = builder.build()?;
             // on macOS index 0 is the application menu
@@ -83,27 +91,44 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
         }
     }
     app.set_menu(menu)?;
-    Ok(())
+    Ok(check_updates)
+}
+
+#[tauri::command]
+fn set_check_updates_enabled(
+    item: tauri::State<'_, CheckUpdatesMenuItem>,
+    enabled: bool,
+) -> Result<(), String> {
+    item.0.set_enabled(enabled).map_err(|e| e.to_string())
 }
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(PendingOpenFiles::default())
         .plugin(tauri_plugin_dialog::init())
         // Persists and restores the main window's size and position across launches.
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .register_asynchronous_uri_scheme_protocol(pdf::protocol::SCHEME, pdf::protocol::handle)
         .setup(|app| {
-            setup_menu(app)?;
+            let check_updates = setup_menu(app)?;
+            app.manage(CheckUpdatesMenuItem(check_updates));
 
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let store = store::Store::load(data_dir);
 
-            // Where to look for the pdfium dynamic library: the bundled
-            // resource dir first, then the source tree during development.
+            // Where to look for the pdfium dynamic library: signed Frameworks
+            // (macOS release builds), bundled Resources, then the source tree
+            // during development.
             let mut pdfium_dirs = Vec::new();
             if let Ok(resource_dir) = app.path().resource_dir() {
+                // macOS notarized builds put libpdfium.dylib in Contents/Frameworks
+                // via bundle.macOS.frameworks (see tauri.macos.conf.json).
+                if let Some(contents) = resource_dir.parent() {
+                    pdfium_dirs.push(contents.join("Frameworks"));
+                }
                 pdfium_dirs.push(resource_dir.join("pdfium"));
             }
             #[cfg(debug_assertions)]
@@ -138,6 +163,9 @@ pub fn run() {
             "open-settings" => {
                 let _ = app.emit("menu-open-settings", ());
             }
+            "check-updates" => {
+                let _ = app.emit("menu-check-updates", ());
+            }
             _ => {}
         })
         .invoke_handler(tauri::generate_handler![
@@ -155,6 +183,7 @@ pub fn run() {
             commands::pdf::take_pending_open_files,
             commands::reading::save_reading_state,
             commands::bookmarks::save_bookmarks,
+            set_check_updates_enabled,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

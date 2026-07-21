@@ -9,6 +9,7 @@ A fast, minimal desktop PDF reader built with **Tauri 2**, **Svelte 5**, and **p
 - **Search & pins** — explorer-style folder tree, filename search with flat results, pin favorites to the top for quick access.
 - **Reading position** — the current page, scroll offset, and zoom are saved per file and restored when you reopen it (or relaunch the app).
 - **Crisp rendering** — pages are rasterized by pdfium at the exact zoom × display scale, served through a custom `mantella://` protocol so they load as cached images.
+- **Auto-updates** — signed releases from GitHub; the app checks for updates on launch and from Settings.
 
 ### Shortcuts
 
@@ -43,8 +44,94 @@ cargo test                    # in src-tauri; exercises pdfium open + render
 ### Build
 
 ```sh
+# Signing key required when createUpdaterArtifacts is enabled (see Releases).
+export TAURI_SIGNING_PRIVATE_KEY_PATH="$PWD/.tauri/mantella.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
 npm run tauri build
 ```
+
+## Releases & auto-updates
+
+Mantella ships updates via [GitHub Releases](https://github.com/andrei-shevel/mantella/releases). The app checks `latest.json` on that release and installs signed updater artifacts. macOS builds from CI are **Developer ID signed and notarized** so Gatekeeper accepts downloads without the “damaged and can’t be opened” quarantine error.
+
+### One-time setup
+
+#### Updater signing key
+
+1. Keep the private key in `.tauri/mantella.key` (gitignored). The matching public key is already in `src-tauri/tauri.conf.json`.
+2. Add GitHub Actions secrets on the repo:
+   - `TAURI_SIGNING_PRIVATE_KEY` — full contents of `.tauri/mantella.key`
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — empty string if the key has no password
+3. Ensure Actions have read/write contents permission (Settings → Actions → General → Workflow permissions).
+
+```sh
+gh secret set TAURI_SIGNING_PRIVATE_KEY < .tauri/mantella.key
+gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD --body ""
+```
+
+If you lose the private key, already-installed apps cannot verify new updates — generate a new keypair only when you accept that break.
+
+#### macOS Developer ID + notarization
+
+Requires an Apple Developer Program membership.
+
+1. Create a **Developer ID Application** certificate (Certificates, Identifiers & Profiles → Certificates). Export it from Keychain Access as a `.p12` with a password.
+2. Base64-encode the `.p12`:
+
+```sh
+openssl base64 -A -in /path/to/certificate.p12 -out certificate-base64.txt
+```
+
+3. Create an App Store Connect API key (Users and Access → Integrations → Team Keys) with at least Developer access. Note the Issuer ID and Key ID; download the `.p8` (only once).
+4. Add these GitHub Actions secrets:
+
+| Secret                       | Value                                 |
+| ---------------------------- | ------------------------------------- |
+| `APPLE_CERTIFICATE`          | Contents of `certificate-base64.txt`  |
+| `APPLE_CERTIFICATE_PASSWORD` | Password for the `.p12`               |
+| `KEYCHAIN_PASSWORD`          | Any password for the CI temp keychain |
+| `APPLE_API_ISSUER`           | Issuer ID from App Store Connect      |
+| `APPLE_API_KEY`              | Key ID from App Store Connect         |
+| `APPLE_API_KEY_CONTENT`      | Full contents of the `.p8` file       |
+
+```sh
+gh secret set APPLE_CERTIFICATE < certificate-base64.txt
+gh secret set APPLE_CERTIFICATE_PASSWORD
+gh secret set KEYCHAIN_PASSWORD
+gh secret set APPLE_API_ISSUER
+gh secret set APPLE_API_KEY
+gh secret set APPLE_API_KEY_CONTENT < /path/to/AuthKey_XXXXX.p8
+```
+
+Local macOS builds can also sign/notarize if the cert is in your login keychain and you export `APPLE_SIGNING_IDENTITY`, `APPLE_API_ISSUER`, `APPLE_API_KEY`, and `APPLE_API_KEY_PATH`. CI remains the source of truth for Release artifacts.
+
+### Publish a release
+
+1. Bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` to the same value.
+2. Commit, then tag and push:
+
+```sh
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+3. The [`release`](.github/workflows/release.yml) workflow builds macOS (arm64 + x64, signed + notarized), Windows, and Linux, creates a draft GitHub Release with installers + updater signatures, and uploads `latest.json` for the in-app updater.
+4. Review the draft release and publish it.
+
+Users on an older build are prompted on launch (and can check from Settings → Updates).
+
+### Verify a macOS build
+
+After downloading the DMG from a draft Release onto a clean Mac:
+
+```sh
+spctl --assess -vv --type install /path/to/Mantella.app
+xcrun stapler validate /path/to/Mantella.dmg
+codesign -dv --verbose=4 /path/to/Mantella.app
+codesign -dv --verbose=4 /path/to/Mantella.app/Contents/Frameworks/libpdfium.dylib
+```
+
+The app should open without a Gatekeeper “damaged” dialog. `libpdfium.dylib` must share the same Team ID as the app.
 
 ## Architecture
 

@@ -45,7 +45,11 @@ pub fn scan_with_pins(
         let Ok(metadata) = std::fs::metadata(&path) else {
             continue;
         };
-        let Ok(id) = cache.resolve(Path::new(&path), metadata.len(), identity::mtime_secs(&metadata)) else {
+        let Ok(id) = cache.resolve(
+            Path::new(&path),
+            metadata.len(),
+            identity::mtime_secs(&metadata),
+        ) else {
             continue;
         };
         migrate_legacy(file_states, &path, &id);

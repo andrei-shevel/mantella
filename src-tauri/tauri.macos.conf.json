@@ -1,0 +1,9 @@
+{
+  "bundle": {
+    "resources": null,
+    "macOS": {
+      "frameworks": ["resources/pdfium/libpdfium.dylib"],
+      "hardenedRuntime": true
+    }
+  }
+}

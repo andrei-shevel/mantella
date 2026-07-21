@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { open } from "@tauri-apps/plugin-dialog";
+  import { message, open } from "@tauri-apps/plugin-dialog";
   import { takePendingOpenFiles } from "./lib/api/commands";
   import {
     onMenuChangeFolder,
+    onMenuCheckUpdates,
     onMenuOpenFile,
     onMenuOpenSettings,
     onOpenFile,
@@ -14,11 +15,13 @@
   import { reader } from "./lib/stores/reader.svelte";
   import { ui } from "./lib/stores/ui.svelte";
   import { shortcuts } from "./lib/stores/shortcuts.svelte";
+  import { updater } from "./lib/stores/updater.svelte";
   import Welcome from "./lib/components/onboarding/Welcome.svelte";
   import Sidebar from "./lib/components/library/Sidebar.svelte";
   import Viewer from "./lib/components/reader/Viewer.svelte";
   import ContextMenu from "./lib/components/common/ContextMenu.svelte";
   import SettingsModal from "./lib/components/settings/SettingsModal.svelte";
+  import UpdatePrompt from "./lib/components/settings/UpdatePrompt.svelte";
 
   // Open files handed to us by the OS (Finder "Open With", double-click).
   // Returns whether a file was opened.
@@ -42,6 +45,28 @@
   async function changeFolder() {
     const files = await settings.chooseLibraryFolder();
     if (files) library.setFiles(files);
+  }
+
+  // App menu → Check for Updates…
+  async function checkForUpdates() {
+    const result = await updater.checkManually();
+    if (result === "busy") {
+      // Menu should already be disabled; keep a fallback for races.
+      await message("Already checking for updates.", {
+        title: "Check for Updates",
+        kind: "info",
+      });
+    } else if (result === "up-to-date") {
+      const version = updater.currentVersion
+        ? `Mantella ${updater.currentVersion} is up to date.`
+        : "Mantella is up to date.";
+      await message(version, { title: "Check for Updates", kind: "info" });
+    } else if (result === "error") {
+      await message(updater.error ?? "Could not check for updates.", {
+        title: "Check for Updates",
+        kind: "error",
+      });
+    }
   }
 
   function onGlobalKeydown(e: KeyboardEvent) {
@@ -70,6 +95,7 @@
     const unlisteners: (() => void)[] = [];
     void (async () => {
       await settings.init();
+      await updater.init();
       if (settings.libraryPath) await library.refresh();
       await library.listen();
       unlisteners.push(
@@ -77,10 +103,13 @@
         await onMenuOpenFile(() => void openFileDialog()),
         await onMenuChangeFolder(() => void changeFolder()),
         await onMenuOpenSettings(() => ui.openSettings()),
+        await onMenuCheckUpdates(() => void checkForUpdates()),
       );
       // A file passed by the OS wins; otherwise restore the last open document.
       const opened = await openExternal();
       if (!opened && settings.lastFile) await reader.open(settings.lastFile);
+      // Don't block startup on the network check.
+      void updater.checkOnStartup();
     })();
 
     // Persist the reading position before the window closes.
@@ -113,6 +142,7 @@
 
 <ContextMenu />
 <SettingsModal />
+<UpdatePrompt />
 
 <style>
   .app {

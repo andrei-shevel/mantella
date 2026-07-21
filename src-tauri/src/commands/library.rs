@@ -61,7 +61,12 @@ pub fn set_last_file(state: State<'_, AppState>, path: Option<String>) -> Result
 }
 
 #[tauri::command]
-pub fn set_pinned(state: State<'_, AppState>, id: String, path: String, pinned: bool) -> Result<()> {
+pub fn set_pinned(
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+    pinned: bool,
+) -> Result<()> {
     let mut store = state.store.lock().unwrap();
     let entry = store.files.entry(id).or_default();
     entry.pinned = pinned;

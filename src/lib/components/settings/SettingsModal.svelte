@@ -3,6 +3,7 @@
   import Icon from "../common/Icon.svelte";
   import { ui } from "../../stores/ui.svelte";
   import { shortcuts } from "../../stores/shortcuts.svelte";
+  import { updater } from "../../stores/updater.svelte";
   import {
     SHORTCUTS,
     FIXED_SHORTCUTS,
@@ -27,6 +28,35 @@
     ui.closeSettings();
     recordingId = null;
     captureError = "";
+  }
+
+  function updateStatusLabel(): string {
+    switch (updater.status) {
+      case "checking":
+        return "Checking…";
+      case "available":
+        return `Version ${updater.availableVersion} available`;
+      case "up-to-date":
+        return "You're up to date";
+      case "downloading": {
+        const pct = updater.progress;
+        return pct == null
+          ? "Downloading…"
+          : `Downloading… ${Math.round(pct * 100)}%`;
+      }
+      case "installing":
+        return "Installing…";
+      case "error":
+        return updater.error ?? "Update check failed";
+      default:
+        return updater.currentVersion
+          ? `Version ${updater.currentVersion}`
+          : "Check for updates";
+    }
+  }
+
+  function updateBusy(): boolean {
+    return updater.busy;
   }
 
   function startRecording(id: string) {
@@ -99,6 +129,31 @@
       </header>
 
       <div class="body">
+        <h3>Updates</h3>
+        <div class="row">
+          <span class="label" class:error={updater.status === "error"}>
+            {updateStatusLabel()}
+          </span>
+          <div class="control">
+            {#if updater.status === "available"}
+              <button
+                class="action"
+                disabled={updateBusy()}
+                onclick={() => void updater.installAndRelaunch()}
+              >
+                Install and restart
+              </button>
+            {/if}
+            <button
+              class="action"
+              disabled={updateBusy()}
+              onclick={() => void updater.checkManually()}
+            >
+              Check for updates
+            </button>
+          </div>
+        </div>
+
         <h3>Keyboard shortcuts</h3>
         {#each CATEGORIES as category (category)}
           {@const defs = SHORTCUTS.filter((s) => s.category === category)}
@@ -230,11 +285,33 @@
     white-space: nowrap;
   }
 
+  .label.error {
+    color: #e5484d;
+  }
+
   .control {
     display: flex;
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+  }
+
+  .action {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: var(--bg-input);
+    color: var(--text-1);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .action:hover:not(:disabled) {
+    background: var(--hover);
+  }
+
+  .action:disabled {
+    opacity: 0.55;
   }
 
   .binding {

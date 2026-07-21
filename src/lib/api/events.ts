@@ -21,3 +21,7 @@ export const onMenuChangeFolder = (callback: () => void): Promise<UnlistenFn> =>
 /** App menu → Settings… in the native menu. */
 export const onMenuOpenSettings = (callback: () => void): Promise<UnlistenFn> =>
   listen("menu-open-settings", () => callback());
+
+/** App menu → Check for Updates… in the native menu. */
+export const onMenuCheckUpdates = (callback: () => void): Promise<UnlistenFn> =>
+  listen("menu-check-updates", () => callback());
