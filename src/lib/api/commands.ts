@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   Bookmark,
   FileEntry,
+  KeyBinding,
   OpenResult,
   PageLink,
   Settings,
@@ -47,3 +48,6 @@ export const saveReadingState = (
 
 export const saveBookmarks = (path: string, bookmarks: Bookmark[]) =>
   invoke<void>("save_bookmarks", { path, bookmarks });
+
+export const setShortcuts = (shortcuts: Record<string, KeyBinding>) =>
+  invoke<void>("set_shortcuts", { shortcuts });

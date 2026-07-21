@@ -22,6 +22,9 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
     let change = MenuItemBuilder::with_id("change-library-folder", "Change Library Folder…")
         .accelerator("CmdOrCtrl+Shift+O")
         .build(app)?;
+    let settings = MenuItemBuilder::with_id("open-settings", "Settings…")
+        .accelerator("CmdOrCtrl+,")
+        .build(app)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let items: [&dyn IsMenuItem<_>; 3] = [&open, &change, &separator];
 
@@ -38,6 +41,9 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
         .version(Some(pkg.version.to_string()))
         .icon(icon)
         .build();
+    // Settings lives in the app menu (next to About), matching macOS convention;
+    // on platforms with no such menu it falls back to the File menu below.
+    let mut settings_placed = false;
     for item in menu.items()? {
         let MenuItemKind::Submenu(sub) = item else {
             continue;
@@ -49,6 +55,8 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
             sub.remove_at(pos)?;
             let about = PredefinedMenuItem::about(app, None, Some(about_metadata))?;
             sub.insert(&about, pos)?;
+            sub.insert(&settings, pos + 1)?;
+            settings_placed = true;
             break;
         }
     }
@@ -57,11 +65,18 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<()> {
         _ => None,
     });
     match file_menu {
-        Some(file_menu) => file_menu.insert_items(&items, 0)?,
+        Some(file_menu) => {
+            file_menu.insert_items(&items, 0)?;
+            if !settings_placed {
+                file_menu.append(&settings)?;
+            }
+        }
         None => {
-            let file_menu = SubmenuBuilder::new(app, "File")
-                .items(&items[..2])
-                .build()?;
+            let mut builder = SubmenuBuilder::new(app, "File").items(&items[..2]);
+            if !settings_placed {
+                builder = builder.item(&settings);
+            }
+            let file_menu = builder.build()?;
             // on macOS index 0 is the application menu
             let pos = if cfg!(target_os = "macos") { 1 } else { 0 };
             menu.insert(&file_menu, pos)?;
@@ -119,6 +134,9 @@ pub fn run() {
             "change-library-folder" => {
                 let _ = app.emit("menu-change-folder", ());
             }
+            "open-settings" => {
+                let _ = app.emit("menu-open-settings", ());
+            }
             _ => {}
         })
         .invoke_handler(tauri::generate_handler![
@@ -127,6 +145,7 @@ pub fn run() {
             commands::library::get_library,
             commands::library::set_last_file,
             commands::library::set_pinned,
+            commands::library::set_shortcuts,
             commands::pdf::open_document,
             commands::pdf::get_page_text,
             commands::pdf::get_page_links,

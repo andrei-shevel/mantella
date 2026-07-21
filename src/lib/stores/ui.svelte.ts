@@ -7,6 +7,7 @@ export interface MenuItem {
 class UiStore {
   sidebarOpen = $state(true);
   bookmarksPanelOpen = $state(false);
+  settingsOpen = $state(false);
   contextMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(
     null,
   );
@@ -17,6 +18,14 @@ class UiStore {
 
   toggleBookmarksPanel() {
     this.bookmarksPanelOpen = !this.bookmarksPanelOpen;
+  }
+
+  openSettings() {
+    this.settingsOpen = true;
+  }
+
+  closeSettings() {
+    this.settingsOpen = false;
   }
 
   openContextMenu(e: MouseEvent, items: MenuItem[]) {

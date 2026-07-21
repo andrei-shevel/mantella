@@ -2,7 +2,8 @@ use crate::error::{AppError, Result};
 use crate::library::scanner::{self, FileEntry};
 use crate::library::watcher;
 use crate::state::AppState;
-use crate::store::Settings;
+use crate::store::{KeyBinding, Settings};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
@@ -55,4 +56,14 @@ pub fn set_pinned(state: State<'_, AppState>, path: String, pinned: bool) -> Res
     let mut store = state.store.lock().unwrap();
     store.files.entry(path).or_default().pinned = pinned;
     store.save_files()
+}
+
+#[tauri::command]
+pub fn set_shortcuts(
+    state: State<'_, AppState>,
+    shortcuts: HashMap<String, KeyBinding>,
+) -> Result<()> {
+    let mut store = state.store.lock().unwrap();
+    store.settings.shortcuts = shortcuts;
+    store.save_settings()
 }

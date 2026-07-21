@@ -7,6 +7,7 @@
   import { settings } from "../../stores/settings.svelte";
   import { ui } from "../../stores/ui.svelte";
   import { history } from "../../stores/history.svelte";
+  import { shortcuts } from "../../stores/shortcuts.svelte";
 
   const isMac = navigator.userAgent.includes("Mac");
   let searchEl = $state<HTMLInputElement>();
@@ -24,7 +25,8 @@
   });
 
   function onKeydown(e: KeyboardEvent) {
-    if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+    if (ui.settingsOpen) return; // the settings modal owns keydown while open
+    if (shortcuts.matches("focus-search", e)) {
       e.preventDefault();
       searchEl?.focus();
       searchEl?.select();

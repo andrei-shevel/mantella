@@ -1,6 +1,7 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import * as api from "../api/commands";
 import type { FileEntry } from "../api/types";
+import { shortcuts } from "./shortcuts.svelte";
 
 class SettingsStore {
   libraryPath = $state<string | null>(null);
@@ -11,6 +12,7 @@ class SettingsStore {
     const settings = await api.getSettings();
     this.libraryPath = settings.libraryPath;
     this.lastFile = settings.lastFile;
+    shortcuts.load(settings.shortcuts);
     this.ready = true;
   }
 

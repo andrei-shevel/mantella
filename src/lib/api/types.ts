@@ -3,6 +3,13 @@
 export interface Settings {
   libraryPath: string | null;
   lastFile: string | null;
+  shortcuts: Record<string, KeyBinding>;
+}
+
+/** A keyboard shortcut binding; only entries the user customized are stored. */
+export interface KeyBinding {
+  key: string;
+  meta: boolean;
 }
 
 export interface FileEntry {

@@ -10,6 +10,7 @@
   import PanelLeft from "@lucide/svelte/icons/panel-left";
   import Pin from "@lucide/svelte/icons/pin";
   import Plus from "@lucide/svelte/icons/plus";
+  import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
   import Search from "@lucide/svelte/icons/search";
   import X from "@lucide/svelte/icons/x";
 
@@ -25,6 +26,7 @@
     "panel-left": PanelLeft,
     pin: Pin,
     plus: Plus,
+    "rotate-ccw": RotateCcw,
     search: Search,
     x: X,
   };
@@ -42,8 +44,4 @@
   const LucideIcon = $derived(icons[name]);
 </script>
 
-<LucideIcon
-  {size}
-  strokeWidth={1.7}
-  fill={filled ? "currentColor" : "none"}
-/>
+<LucideIcon {size} strokeWidth={1.7} fill={filled ? "currentColor" : "none"} />

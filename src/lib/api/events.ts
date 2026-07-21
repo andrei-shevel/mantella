@@ -17,3 +17,7 @@ export const onMenuOpenFile = (callback: () => void): Promise<UnlistenFn> =>
 /** File → Change Library Folder… in the native menu. */
 export const onMenuChangeFolder = (callback: () => void): Promise<UnlistenFn> =>
   listen("menu-change-folder", () => callback());
+
+/** App menu → Settings… in the native menu. */
+export const onMenuOpenSettings = (callback: () => void): Promise<UnlistenFn> =>
+  listen("menu-open-settings", () => callback());

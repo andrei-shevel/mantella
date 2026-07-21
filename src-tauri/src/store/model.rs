@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -6,6 +7,16 @@ use std::path::PathBuf;
 pub struct Settings {
     pub library_path: Option<PathBuf>,
     pub last_file: Option<PathBuf>,
+    /// Keyboard shortcut overrides, keyed by shortcut id. Only entries the
+    /// user has customized are present; everything else uses its frontend default.
+    pub shortcuts: HashMap<String, KeyBinding>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct KeyBinding {
+    pub key: String,
+    pub meta: bool,
 }
 
 /// Per-file persisted state, keyed by absolute file path.

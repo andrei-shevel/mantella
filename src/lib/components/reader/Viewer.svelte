@@ -8,6 +8,7 @@
   import { reader } from "../../stores/reader.svelte";
   import { ui } from "../../stores/ui.svelte";
   import { history } from "../../stores/history.svelte";
+  import { shortcuts } from "../../stores/shortcuts.svelte";
 
   const PT_TO_PX = 96 / 72; // 100% zoom = 96dpi CSS pixels for 72dpi PDF points
   const PADDING = 28;
@@ -227,22 +228,22 @@
   function onKeydown(e: KeyboardEvent) {
     const target = e.target as HTMLElement;
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+    if (ui.settingsOpen) return; // the settings modal owns keydown while open
     if (reader.docId === null) return;
-    const meta = e.metaKey || e.ctrlKey;
 
-    if (meta && (e.key === "=" || e.key === "+")) {
+    if (shortcuts.matches("zoom-in", e)) {
       e.preventDefault();
       zoomBy(1.15);
-    } else if (meta && e.key === "-") {
+    } else if (shortcuts.matches("zoom-out", e)) {
       e.preventDefault();
       zoomBy(1 / 1.15);
-    } else if (meta && e.key === "0") {
+    } else if (shortcuts.matches("zoom-reset", e)) {
       e.preventDefault();
       setZoomPreservingPosition(null);
-    } else if (meta && e.key === "ArrowDown") {
+    } else if (shortcuts.matches("next-page", e)) {
       e.preventDefault();
       scrollToPage(reader.currentPage + 1);
-    } else if (meta && e.key === "ArrowUp") {
+    } else if (shortcuts.matches("prev-page", e)) {
       e.preventDefault();
       scrollToPage(reader.currentPage - 1);
     } else if (e.key === "PageDown") {

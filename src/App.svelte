@@ -6,16 +6,19 @@
   import {
     onMenuChangeFolder,
     onMenuOpenFile,
+    onMenuOpenSettings,
     onOpenFile,
   } from "./lib/api/events";
   import { settings } from "./lib/stores/settings.svelte";
   import { library } from "./lib/stores/library.svelte";
   import { reader } from "./lib/stores/reader.svelte";
   import { ui } from "./lib/stores/ui.svelte";
+  import { shortcuts } from "./lib/stores/shortcuts.svelte";
   import Welcome from "./lib/components/onboarding/Welcome.svelte";
   import Sidebar from "./lib/components/library/Sidebar.svelte";
   import Viewer from "./lib/components/reader/Viewer.svelte";
   import ContextMenu from "./lib/components/common/ContextMenu.svelte";
+  import SettingsModal from "./lib/components/settings/SettingsModal.svelte";
 
   // Open files handed to us by the OS (Finder "Open With", double-click).
   // Returns whether a file was opened.
@@ -44,13 +47,14 @@
   function onGlobalKeydown(e: KeyboardEvent) {
     const target = e.target as HTMLElement;
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+    if (ui.settingsOpen) return; // the settings modal owns keydown while open
     const meta = e.metaKey || e.ctrlKey;
     if (!meta) return;
 
-    if (e.key === "ArrowLeft") {
+    if (shortcuts.matches("toggle-sidebar", e)) {
       e.preventDefault();
       ui.toggleSidebar();
-    } else if (e.key === "ArrowRight") {
+    } else if (shortcuts.matches("toggle-bookmarks", e)) {
       if (reader.docId === null) return; // no doc open: true no-op
       e.preventDefault();
       ui.toggleBookmarksPanel();
@@ -72,6 +76,7 @@
         await onOpenFile(() => void openExternal()),
         await onMenuOpenFile(() => void openFileDialog()),
         await onMenuChangeFolder(() => void changeFolder()),
+        await onMenuOpenSettings(() => ui.openSettings()),
       );
       // A file passed by the OS wins; otherwise restore the last open document.
       const opened = await openExternal();
@@ -107,6 +112,7 @@
 {/if}
 
 <ContextMenu />
+<SettingsModal />
 
 <style>
   .app {
