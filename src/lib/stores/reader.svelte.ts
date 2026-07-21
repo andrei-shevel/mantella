@@ -7,6 +7,8 @@ const SAVE_DEBOUNCE_MS = 800;
 class ReaderStore {
   path = $state<string | null>(null);
   docId = $state<number | null>(null);
+  /** Content-based id (partial hash + size); stable across rename/move. */
+  fileId = $state<string | null>(null);
   pages = $state<PageSize[]>([]);
   /** null = fit to width */
   zoom = $state<number | null>(null);
@@ -65,6 +67,7 @@ class ReaderStore {
 
     this.path = path;
     this.docId = null;
+    this.fileId = null;
     this.pages = [];
     this.bookmarks = [];
     this.error = null;
@@ -92,6 +95,7 @@ class ReaderStore {
       this.bookmarks = result.state.bookmarks ?? [];
       this.pages = result.pages;
       this.docId = result.docId;
+      this.fileId = result.id;
       history.confirmOpen(path, {
         page: this.currentPage,
         offset: restore.offset,
@@ -110,6 +114,7 @@ class ReaderStore {
     void api.setLastFile(null);
     this.path = null;
     this.docId = null;
+    this.fileId = null;
     this.pages = [];
     this.bookmarks = [];
     this.error = null;
@@ -172,9 +177,9 @@ class ReaderStore {
   }
 
   private persistBookmarks() {
-    if (!this.path) return;
+    if (!this.fileId) return;
     void api
-      .saveBookmarks(this.path, $state.snapshot(this.bookmarks))
+      .saveBookmarks(this.fileId, $state.snapshot(this.bookmarks))
       .catch(() => {
         // best effort, like reading-position saves
       });
@@ -202,10 +207,10 @@ class ReaderStore {
       clearTimeout(this.saveTimer);
       this.saveTimer = null;
     }
-    if (!this.path || this.docId === null) return;
+    if (!this.fileId || this.docId === null) return;
     try {
       await api.saveReadingState(
-        this.path,
+        this.fileId,
         this.currentPage,
         this.lastPageOffset,
         this.zoom,

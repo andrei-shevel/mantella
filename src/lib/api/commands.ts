@@ -16,8 +16,8 @@ export const setLibraryFolder = (path: string) =>
 
 export const getLibrary = () => invoke<FileEntry[]>("get_library");
 
-export const setPinned = (path: string, pinned: boolean) =>
-  invoke<void>("set_pinned", { path, pinned });
+export const setPinned = (id: string, path: string, pinned: boolean) =>
+  invoke<void>("set_pinned", { id, path, pinned });
 
 export const setLastFile = (path: string | null) =>
   invoke<void>("set_last_file", { path });
@@ -40,14 +40,14 @@ export const getPageLinks = (docId: number, pageIndex: number) =>
 export const openUrl = (url: string) => invoke<void>("open_url", { url });
 
 export const saveReadingState = (
-  path: string,
+  id: string,
   page: number,
   pageOffset: number,
   zoom: number | null,
-) => invoke<void>("save_reading_state", { path, page, pageOffset, zoom });
+) => invoke<void>("save_reading_state", { id, page, pageOffset, zoom });
 
-export const saveBookmarks = (path: string, bookmarks: Bookmark[]) =>
-  invoke<void>("save_bookmarks", { path, bookmarks });
+export const saveBookmarks = (id: string, bookmarks: Bookmark[]) =>
+  invoke<void>("save_bookmarks", { id, bookmarks });
 
 export const setShortcuts = (shortcuts: Record<string, KeyBinding>) =>
   invoke<void>("set_shortcuts", { shortcuts });

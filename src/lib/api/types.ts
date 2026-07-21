@@ -13,6 +13,8 @@ export interface KeyBinding {
 }
 
 export interface FileEntry {
+  /** Content-based id (partial hash + size); stable across rename/move. */
+  id: string;
   path: string;
   name: string;
   /** Relative to the library root; the absolute path for files outside it. */
@@ -86,4 +88,6 @@ export interface OpenResult {
   pageCount: number;
   pages: PageSize[];
   state: FileState;
+  /** Content-based id (partial hash + size); stable across rename/move. */
+  id: string;
 }

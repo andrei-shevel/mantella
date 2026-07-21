@@ -19,7 +19,9 @@ pub struct KeyBinding {
     pub meta: bool,
 }
 
-/// Per-file persisted state, keyed by absolute file path.
+/// Per-file persisted state, keyed by a content-based file id (partial hash
+/// and size; see `library::identity`) rather than by path, so state
+/// survives the file being renamed or moved.
 /// `zoom: None` means "fit to width".
 ///
 /// The reading position is anchored as page + offset within that page
@@ -35,6 +37,11 @@ pub struct FileState {
     pub zoom: Option<f64>,
     pub last_opened: Option<u64>,
     pub bookmarks: Vec<Bookmark>,
+    /// Most recently known absolute path for this id. Only needed to (a)
+    /// locate pinned files living outside the library root, which can't be
+    /// rediscovered by re-scanning it, and (b) let the watcher tell whether
+    /// a vanished id used to live under the watched root.
+    pub last_known_path: Option<String>,
 }
 
 impl Default for FileState {
@@ -46,6 +53,7 @@ impl Default for FileState {
             zoom: None,
             last_opened: None,
             bookmarks: Vec::new(),
+            last_known_path: None,
         }
     }
 }

@@ -1,11 +1,12 @@
 use crate::error::{AppError, Result};
+use crate::library::identity;
 use crate::pdf::engine::OpenInfo;
 use crate::pdf::links::PageLink;
 use crate::pdf::text::TextRun;
 use crate::state::{AppState, PendingOpenFiles};
 use crate::store::FileState;
 use serde::Serialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -17,6 +18,7 @@ pub struct OpenResult {
     #[serde(flatten)]
     pub info: OpenInfo,
     pub state: FileState,
+    pub id: String,
 }
 
 #[tauri::command]
@@ -32,18 +34,36 @@ pub async fn open_document(state: State<'_, AppState>, path: String) -> Result<O
         .open_cancellable(PathBuf::from(&path), Some(cancel))
         .await?;
 
+    // Hash failure (permission race, deleted mid-open) shouldn't block
+    // showing a document pdfium already loaded successfully: fall back to
+    // the raw path as the id. It's naturally shaped like a legacy key, so a
+    // later scan will opportunistically migrate it once the file is stable.
+    let id = std::fs::metadata(&path)
+        .ok()
+        .and_then(|m| {
+            state
+                .identity_cache
+                .lock()
+                .unwrap()
+                .resolve(Path::new(&path), m.len(), identity::mtime_secs(&m))
+                .ok()
+        })
+        .unwrap_or_else(|| path.clone());
+
     let mut store = state.store.lock().unwrap();
-    let entry = store.files.entry(path).or_default();
+    let entry = store.files.entry(id.clone()).or_default();
     entry.last_opened = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .ok()
         .map(|d| d.as_secs());
+    entry.last_known_path = Some(path.clone());
     let file_state = entry.clone();
     let _ = store.save_files();
 
     Ok(OpenResult {
         info,
         state: file_state,
+        id,
     })
 }
 

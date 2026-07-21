@@ -110,17 +110,19 @@ class LibraryStore {
 
   async togglePin(file: FileEntry) {
     const pinned = !file.pinned;
-    await api.setPinned(file.path, pinned);
+    await api.setPinned(file.id, file.path, pinned);
     // an outside-the-library file is only listed because of its pin
+    // (matched by id, not path: duplicate-content files share identity and
+    // flip together)
     this.files =
       pinned || file.inLibrary
-        ? this.files.map((f) => (f.path === file.path ? { ...f, pinned } : f))
-        : this.files.filter((f) => f.path !== file.path);
+        ? this.files.map((f) => (f.id === file.id ? { ...f, pinned } : f))
+        : this.files.filter((f) => f.id !== file.id);
   }
 
   /** Pin a file that isn't in the list yet (opened from outside the library). */
-  async pinExternal(path: string) {
-    await api.setPinned(path, true);
+  async pinExternal(id: string, path: string) {
+    await api.setPinned(id, path, true);
     await this.refresh();
   }
 }

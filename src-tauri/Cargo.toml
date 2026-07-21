@@ -22,6 +22,7 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 notify = "8"
 notify-debouncer-full = "0.5"
 walkdir = "2"
+sha2 = "0.10"
 tokio = { version = "1", features = ["sync"] }
 http = "1"
 open = "5"

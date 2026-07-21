@@ -124,6 +124,7 @@ pub fn run() {
                 pdf,
                 watcher: Mutex::new(watcher),
                 open_cancel: Mutex::new(None),
+                identity_cache: Mutex::new(library::identity::IdentityCache::new()),
             });
             Ok(())
         })

@@ -25,7 +25,8 @@
 
   async function togglePin() {
     if (currentFile) await library.togglePin(currentFile);
-    else if (reader.path) await library.pinExternal(reader.path);
+    else if (reader.fileId && reader.path)
+      await library.pinExternal(reader.fileId, reader.path);
   }
 
   async function closeDoc() {

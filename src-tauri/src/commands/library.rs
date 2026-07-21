@@ -33,14 +33,23 @@ pub fn set_library_folder(
     let new_watcher = watcher::start(app, root.clone())?;
     *state.watcher.lock().unwrap() = Some(new_watcher);
 
-    let store = state.store.lock().unwrap();
-    Ok(scanner::scan_with_pins(Some(&root), &store.files))
+    let mut store = state.store.lock().unwrap();
+    let mut cache = state.identity_cache.lock().unwrap();
+    let entries = scanner::scan_with_pins(Some(&root), &mut store.files, &mut cache);
+    drop(cache);
+    let _ = store.save_files();
+    Ok(entries)
 }
 
 #[tauri::command]
 pub fn get_library(state: State<'_, AppState>) -> Vec<FileEntry> {
-    let store = state.store.lock().unwrap();
-    scanner::scan_with_pins(store.settings.library_path.as_deref(), &store.files)
+    let mut store = state.store.lock().unwrap();
+    let root = store.settings.library_path.clone();
+    let mut cache = state.identity_cache.lock().unwrap();
+    let entries = scanner::scan_with_pins(root.as_deref(), &mut store.files, &mut cache);
+    drop(cache);
+    let _ = store.save_files();
+    entries
 }
 
 /// Records (or clears, with `None`) the document to reopen on next launch.
@@ -52,9 +61,11 @@ pub fn set_last_file(state: State<'_, AppState>, path: Option<String>) -> Result
 }
 
 #[tauri::command]
-pub fn set_pinned(state: State<'_, AppState>, path: String, pinned: bool) -> Result<()> {
+pub fn set_pinned(state: State<'_, AppState>, id: String, path: String, pinned: bool) -> Result<()> {
     let mut store = state.store.lock().unwrap();
-    store.files.entry(path).or_default().pinned = pinned;
+    let entry = store.files.entry(id).or_default();
+    entry.pinned = pinned;
+    entry.last_known_path = Some(path);
     store.save_files()
 }
 
