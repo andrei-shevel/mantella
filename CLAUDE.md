@@ -36,16 +36,17 @@ pdfium-render types wrap raw `FPDF_*` pointers and are `!Send`, so **all** PDF w
 ### Backend layout (`src-tauri/src/`)
 
 - `pdf/` — engine (worker thread), renderer (page → PNG), text/links extraction, `mantella://` protocol handler
-- `library/` — recursive `*.pdf` scanner and a debounced fs watcher that emits `library-changed` events and prunes state of deleted files
-- `store/` — persisted JSON in the app data dir: `settings.json` (library path) and `files.json` (per-file page/scroll/zoom/pin, keyed by absolute file path)
-- `commands/` — thin `#[tauri::command]` handlers grouped by domain (library, pdf, reading)
+- `library/` — recursive `*.pdf` scanner, a debounced fs watcher that emits `library-changed` events and prunes state of deleted files, and `identity.rs` (content-based file id: partial hash + size, so per-file state survives renames/moves)
+- `store/` — persisted JSON in the app data dir: `settings.json` (library path) and `files.json` (per-file page/scroll/zoom/pin/bookmarks, keyed by content id from `library/identity.rs`, not path)
+- `commands/` — thin `#[tauri::command]` handlers grouped by domain (library, pdf, reading, bookmarks)
 - `state.rs` — `AppState` (store + PdfWorker + watcher) managed by Tauri
 
 macOS "Open With"/double-click file opens arrive as Apple events (not argv); they are buffered in `PendingOpenFiles` and drained by the frontend via `take_pending_open_files` after an `open-file` event (see the `RunEvent::Opened` handler in `lib.rs`).
 
 ### Frontend layout (`src/lib/`)
 
-- `stores/` — Svelte 5 rune-based class singletons (`settings`, `library`, `reader`, `ui`). `reader.svelte.ts` owns document lifecycle: it guards against stale async opens (user switching files mid-load), debounces reading-position saves, and hands the restore position to the Viewer via `pendingRestore`.
-- `components/` — `onboarding/` (welcome/folder pick), `library/` (sidebar, folder tree, search, pins), `reader/` (virtualized `Viewer.svelte`, `Page.svelte`, toolbar, selectable text layer in `textLayer.ts`)
+- `stores/` — Svelte 5 rune-based class singletons (`settings`, `library`, `reader`, `ui`, `shortcuts`). `reader.svelte.ts` owns document lifecycle: it guards against stale async opens (user switching files mid-load), debounces reading-position saves, and hands the restore position to the Viewer via `pendingRestore`.
+- `components/` — `onboarding/` (welcome/folder pick), `library/` (sidebar, folder tree, search, pins), `reader/` (virtualized `Viewer.svelte`, `Page.svelte`, toolbar, selectable text layer in `textLayer.ts`, bookmarks panel/markers), `settings/` (settings modal, update prompt), `common/` (shared UI: context menu, empty state, icon)
+- `shortcuts.ts` — rebindable shortcut definitions + defaults, used by the `shortcuts` store
 
-Per-file reading state (page, scroll offset, zoom, pinned) is restored on open and saved debounced; zoom `null` means fit-to-width.
+Per-file reading state (page, scroll offset, zoom, pinned, bookmarks) is restored on open and saved debounced; zoom `null` means fit-to-width. Identity is content-based (see `library/identity.rs` above), so this state survives the file being renamed or moved.

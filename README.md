@@ -2,24 +2,43 @@
 
 A fast, minimal desktop PDF reader built with **Tauri 2**, **Svelte 5**, and **pdfium** (Chromium's PDF engine) for native-quality rendering.
 
+**[mantella.bearrr.io](https://mantella.bearrr.io/)**
+
 ## Features
 
 - **Library folder** — pick a folder of PDFs once; it's remembered and scanned recursively.
 - **Live sync** — files copied into (or removed from) the folder appear/disappear in the sidebar automatically.
 - **Search & pins** — explorer-style folder tree, filename search with flat results, pin favorites to the top for quick access.
-- **Reading position** — the current page, scroll offset, and zoom are saved per file and restored when you reopen it (or relaunch the app).
+- **Reading position** — the current page, scroll offset, and zoom are saved per file (keyed by content, so it survives the file being renamed or moved) and restored when you reopen it.
+- **Bookmarks** — save named positions within a document and jump back to them from the bookmarks panel.
+- **Customizable shortcuts** — rebind navigation, zoom, and panel shortcuts from Settings.
 - **Crisp rendering** — pages are rasterized by pdfium at the exact zoom × display scale, served through a custom `mantella://` protocol so they load as cached images.
 - **Auto-updates** — signed releases from GitHub; the app checks for updates on launch and from Settings.
 
 ### Shortcuts
 
-| Keys            | Action               |
-| --------------- | -------------------- |
-| ⌘F              | Focus file search    |
-| ←/→, PgUp/PgDn  | Previous / next page |
-| ⌘+ / ⌘−         | Zoom in / out        |
-| ⌘0              | Fit to width         |
-| ⌘/Ctrl + scroll | Zoom                 |
+Defaults — rebind any of these from Settings (⌘,):
+
+| Keys    | Action                 |
+| ------- | ---------------------- |
+| ⌘↑ / ⌘↓ | Previous / next page   |
+| ⌘+ / ⌘− | Zoom in / out          |
+| ⌘0      | Fit to width           |
+| ⌘←      | Toggle files panel     |
+| ⌘→      | Toggle bookmarks panel |
+| ⌘F      | Focus file search      |
+
+Fixed:
+
+| Keys            | Action                 |
+| --------------- | ---------------------- |
+| PgUp/PgDn       | Previous / next page   |
+| Home / End      | First / last page      |
+| ⌘/Ctrl + scroll | Zoom                   |
+| ⌘1 – ⌘9         | Open pinned file       |
+| ⌘O              | Open PDF…              |
+| ⌘⇧O             | Change library folder… |
+| ⌘,              | Settings…              |
 
 ## Development
 
@@ -37,6 +56,7 @@ npm run tauri dev
 
 ```sh
 npm run check                 # svelte-check (frontend types)
+npm run format:check          # prettier
 cargo clippy                  # in src-tauri
 cargo test                    # in src-tauri; exercises pdfium open + render
 ```
@@ -138,8 +158,10 @@ The app should open without a Gatekeeper “damaged” dialog. `libpdfium.dylib`
 ```
 src/                      Svelte 5 frontend (runes)
   lib/api/                typed invoke/event wrappers — the only IPC surface
-  lib/stores/             settings / library / reader state
-  lib/components/         onboarding, library sidebar, reader (virtualized viewer)
+  lib/stores/             settings / library / reader / shortcuts state
+  lib/shortcuts.ts        rebindable shortcut definitions + defaults
+  lib/components/         onboarding, library sidebar, reader (virtualized
+                          viewer, bookmarks panel), settings, shared common
 src-tauri/src/
   pdf/engine.rs           pdfium worker thread (pdfium types are !Send, so all
                           PDF work is serialized onto one owning thread)
@@ -147,8 +169,12 @@ src-tauri/src/
   pdf/protocol.rs         mantella://{docId}/{page}?w={px} scheme handler
   library/scanner.rs      recursive *.pdf scan
   library/watcher.rs      debounced fs watcher → `library-changed` event
-  store/                  settings.json + files.json (per-file position/zoom/pin)
-  commands/               #[tauri::command] handlers
+  library/identity.rs     content-based file id (partial hash + size) so
+                          per-file state survives renames/moves
+  store/                  settings.json + files.json (per-file position/zoom/
+                          pin/bookmarks, keyed by content id)
+  commands/               #[tauri::command] handlers (library, pdf, reading,
+                          bookmarks)
 ```
 
-Per-file reading state is keyed by absolute path in `files.json` in the app data directory; state of files deleted from the library is pruned automatically by the watcher.
+Per-file reading state is keyed by a content-based id (partial hash + size, see `library/identity.rs`) in `files.json` in the app data directory, so it survives the file being renamed or moved; state of files deleted from the library is pruned automatically by the watcher.
