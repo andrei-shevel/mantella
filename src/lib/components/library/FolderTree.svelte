@@ -2,7 +2,9 @@
   import FolderTree from "./FolderTree.svelte";
   import Icon from "../common/Icon.svelte";
   import FileItem from "./FileItem.svelte";
+  import * as api from "../../api/commands";
   import { library, type DirNode } from "../../stores/library.svelte";
+  import { ui } from "../../stores/ui.svelte";
 
   let { node, depth = 0 }: { node: DirNode; depth?: number } = $props();
 </script>
@@ -18,6 +20,13 @@
     onkeydown={(e) => {
       if (e.key === "Enter") library.toggleDir(dir.relPath);
     }}
+    oncontextmenu={(e) =>
+      ui.openContextMenu(e, [
+        {
+          label: "Open in Finder",
+          action: () => void api.revealInFinder(dir.path),
+        },
+      ])}
   >
     <span class="folder-icon"><Icon name="folder" size={15} filled /></span>
     <span class="fname">{dir.name}</span>

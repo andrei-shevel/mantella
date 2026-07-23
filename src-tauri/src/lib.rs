@@ -175,6 +175,7 @@ pub fn run() {
             commands::library::set_last_file,
             commands::library::set_pinned,
             commands::library::set_shortcuts,
+            commands::library::reveal_in_finder,
             commands::pdf::open_document,
             commands::pdf::get_page_text,
             commands::pdf::get_page_links,

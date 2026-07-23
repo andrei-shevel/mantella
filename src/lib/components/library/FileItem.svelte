@@ -1,6 +1,8 @@
 <script lang="ts">
   import Icon from "../common/Icon.svelte";
+  import * as api from "../../api/commands";
   import { reader } from "../../stores/reader.svelte";
+  import { ui } from "../../stores/ui.svelte";
   import { formatBytes } from "../../utils/format";
   import type { FileEntry } from "../../api/types";
 
@@ -29,6 +31,13 @@
   onkeydown={(e) => {
     if (e.key === "Enter") void reader.open(file.path);
   }}
+  oncontextmenu={(e) =>
+    ui.openContextMenu(e, [
+      {
+        label: "Open in Finder",
+        action: () => void api.revealInFinder(file.path),
+      },
+    ])}
 >
   <span class="doc-icon"><Icon name="file" size={15} /></span>
   <span class="labels">

@@ -52,6 +52,9 @@ export const saveBookmarks = (id: string, bookmarks: Bookmark[]) =>
 export const setShortcuts = (shortcuts: Record<string, KeyBinding>) =>
   invoke<void>("set_shortcuts", { shortcuts });
 
+export const revealInFinder = (path: string) =>
+  invoke<void>("reveal_in_finder", { path });
+
 /** Enable/disable the native Check for Updates… menu item. */
 export const setCheckUpdatesEnabled = (enabled: boolean) =>
   invoke<void>("set_check_updates_enabled", { enabled });

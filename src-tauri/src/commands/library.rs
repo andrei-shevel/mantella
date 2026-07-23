@@ -83,3 +83,37 @@ pub fn set_shortcuts(
     store.settings.shortcuts = shortcuts;
     store.save_settings()
 }
+
+/// Reveals a library file or folder in the OS file manager. Folders are
+/// opened directly; files are selected within their containing folder
+/// where the OS supports it (macOS, Windows), otherwise the containing
+/// folder is opened.
+#[tauri::command]
+pub fn reveal_in_finder(path: String) -> Result<()> {
+    let path = PathBuf::from(&path);
+    if path.is_dir() {
+        Ok(open::that_detached(&path)?)
+    } else {
+        Ok(reveal_file(&path)?)
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn reveal_file(path: &std::path::Path) -> std::io::Result<()> {
+    std::process::Command::new("open").arg("-R").arg(path).spawn()?;
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn reveal_file(path: &std::path::Path) -> std::io::Result<()> {
+    let mut arg = std::ffi::OsString::from("/select,");
+    arg.push(path.as_os_str());
+    std::process::Command::new("explorer").arg(arg).spawn()?;
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn reveal_file(path: &std::path::Path) -> std::io::Result<()> {
+    let parent = path.parent().unwrap_or(path);
+    open::that_detached(parent)
+}

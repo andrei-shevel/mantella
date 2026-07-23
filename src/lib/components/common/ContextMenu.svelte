@@ -1,5 +1,7 @@
 <script lang="ts">
   // App-wide singleton context menu, driven by ui.openContextMenu(event, items).
+  // Also suppresses the native WebView context menu everywhere else, so
+  // right-clicking blank areas doesn't surface "Reload"/"Inspect Element".
   import { ui } from "../../stores/ui.svelte";
 
   let menuEl = $state<HTMLDivElement>();
@@ -33,6 +35,7 @@
   onwheel={() => ui.closeContextMenu()}
   onresize={() => ui.closeContextMenu()}
   onblur={() => ui.closeContextMenu()}
+  oncontextmenu={(e) => e.preventDefault()}
 />
 
 {#if ui.contextMenu}

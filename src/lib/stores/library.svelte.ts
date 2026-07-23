@@ -3,10 +3,13 @@ import * as api from "../api/commands";
 import { onLibraryChanged } from "../api/events";
 import type { FileEntry } from "../api/types";
 import { reader } from "./reader.svelte";
+import { settings } from "./settings.svelte";
 
 export interface DirNode {
   name: string;
   relPath: string;
+  /** Absolute path; used for the "Open in Finder" context menu action. */
+  path: string;
   dirs: DirNode[];
   files: FileEntry[];
 }
@@ -25,9 +28,15 @@ function loadExpanded(): string[] {
   }
 }
 
-function buildTree(files: FileEntry[]): DirNode {
-  const root: DirNode = { name: "", relPath: "", dirs: [], files: [] };
-  const dirMap = new Map<string, DirNode>([["", root]]);
+function buildTree(files: FileEntry[], root: string): DirNode {
+  const rootNode: DirNode = {
+    name: "",
+    relPath: "",
+    path: root,
+    dirs: [],
+    files: [],
+  };
+  const dirMap = new Map<string, DirNode>([["", rootNode]]);
 
   const ensureDir = (relPath: string): DirNode => {
     const existing = dirMap.get(relPath);
@@ -37,6 +46,7 @@ function buildTree(files: FileEntry[]): DirNode {
     const node: DirNode = {
       name: relPath.slice(slash + 1),
       relPath,
+      path: `${root}/${relPath}`,
       dirs: [],
       files: [],
     };
@@ -56,9 +66,9 @@ function buildTree(files: FileEntry[]): DirNode {
     node.dirs.sort((a, b) => a.name.localeCompare(b.name));
     node.dirs.forEach(sortDirs);
   };
-  sortDirs(root); // files are already name-sorted by the scanner
+  sortDirs(rootNode); // files are already name-sorted by the scanner
 
-  return root;
+  return rootNode;
 }
 
 class LibraryStore {
@@ -76,7 +86,7 @@ class LibraryStore {
   pinned = $derived(this.files.filter((f) => f.pinned));
   /** Files under the library root; excludes pinned outsiders. */
   libraryFiles = $derived(this.files.filter((f) => f.inLibrary));
-  tree = $derived(buildTree(this.libraryFiles));
+  tree = $derived(buildTree(this.libraryFiles, settings.libraryPath ?? ""));
 
   toggleDir(relPath: string) {
     if (this.expanded.has(relPath)) this.expanded.delete(relPath);
