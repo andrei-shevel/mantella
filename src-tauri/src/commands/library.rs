@@ -113,9 +113,17 @@ fn reveal_file(path: &std::path::Path) -> std::io::Result<()> {
 
 #[cfg(target_os = "windows")]
 fn reveal_file(path: &std::path::Path) -> std::io::Result<()> {
-    let mut arg = std::ffi::OsString::from("/select,");
+    // Explorer's command-line parser is not standard argv parsing: it only
+    // reliably recognizes `/select,` as a switch when the path that follows
+    // is quoted on its own (`/select,"C:\a b\file.pdf"`), not when the whole
+    // `/select,path` argument gets wrapped in one pair of quotes (which is
+    // what `Command::arg` does automatically as soon as the path contains a
+    // space). So the raw command line is built by hand and passed unescaped.
+    use std::os::windows::process::CommandExt;
+    let mut arg = std::ffi::OsString::from("/select,\"");
     arg.push(path.as_os_str());
-    std::process::Command::new("explorer").arg(arg).spawn()?;
+    arg.push("\"");
+    std::process::Command::new("explorer").raw_arg(arg).spawn()?;
     Ok(())
 }
 
