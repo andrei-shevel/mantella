@@ -131,7 +131,7 @@ Local macOS builds can also sign/notarize if the cert is in your login keychain 
 
 ### Publish a release
 
-1. Bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` to the same value.
+1. Bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` to the same value, and add a matching `## [x.y.z] - date` section to `CHANGELOG.md`. That section becomes both the GitHub Release notes and the `notes` field in `latest.json` shown by the in-app updater — edit it here, not on the release page afterward (see below).
 2. Commit, then tag and push:
 
 ```sh
@@ -139,7 +139,7 @@ git tag v0.2.0
 git push origin v0.2.0
 ```
 
-3. The [`release`](.github/workflows/release.yml) workflow builds macOS (arm64 + x64, signed + notarized), Windows, and Linux, creates a draft GitHub Release with installers + updater signatures, and uploads `latest.json` for the in-app updater.
+3. The [`release`](.github/workflows/release.yml) workflow builds macOS (arm64 + x64, signed + notarized), Windows, and Linux, creates a draft GitHub Release (using the matching `CHANGELOG.md` section as its notes) with installers + updater signatures, and uploads `latest.json` for the in-app updater.
 4. Review the draft release and publish it.
 
 Users on an older build are prompted on launch (and can check from Settings → Updates).

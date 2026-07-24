@@ -109,6 +109,34 @@ jobs:
           printf '%s' "$APPLE_API_KEY_CONTENT" > "$RUNNER_TEMP/AuthKey.p8"
           echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
 
+      - name: Extract changelog section
+        id: changelog
+        shell: python
+        run: |
+          import os, re
+
+          version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          with open("CHANGELOG.md", encoding="utf-8") as f:
+              text = f.read()
+
+          # Sections are "## [x.y.z] - date" headings; grab the body of the
+          # one matching this tag's version, up to the next heading (or EOF).
+          sections = re.split(r"^## \[(.+?)\].*$", text, flags=re.MULTILINE)
+          notes = next(
+              (sections[i + 1] for i in range(1, len(sections), 2) if sections[i] == version),
+              "",
+          ).strip()
+
+          if not notes:
+              notes = (
+                  "See the assets below to download this version.\n\n"
+                  "Installed builds will offer this release via the in-app updater."
+              )
+
+          delimiter = "CHANGELOG_EOF"
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"notes<<{delimiter}\n{notes}\n{delimiter}\n")
+
       - name: Build and publish
         uses: tauri-apps/tauri-action@v1
         env:
@@ -123,11 +151,8 @@ jobs:
           APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
         with:
           tagName: v__VERSION__
-          releaseName: Mantella v__VERSION__
-          releaseBody: |
-            See the assets below to download this version.
-
-            Installed builds will offer this release via the in-app updater.
+          releaseName: v__VERSION__
+          releaseBody: ${{ steps.changelog.outputs.notes }}
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
