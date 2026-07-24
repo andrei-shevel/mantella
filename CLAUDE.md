@@ -49,4 +49,6 @@ macOS "Open With"/double-click file opens arrive as Apple events (not argv); the
 - `components/` — `onboarding/` (welcome/folder pick), `library/` (sidebar, folder tree, search, pins), `reader/` (virtualized `Viewer.svelte`, `Page.svelte`, toolbar, selectable text layer in `textLayer.ts`, bookmarks panel/markers), `settings/` (settings modal, update prompt), `common/` (shared UI: context menu, empty state, icon)
 - `shortcuts.ts` — rebindable shortcut definitions + defaults, used by the `shortcuts` store
 
+Keyboard navigation in the sidebar file list and bookmarks panel uses a roving-cursor pattern (single container `tabindex`, `aria-activedescendant` pointing at the active row) rather than per-row `tabindex`, so arrow keys move a `cursor`/`bookmarkCursor` key tracked on `library`/`reader` instead of the DOM focus. Each store also exposes its container's element (`listEl`, `viewerEl`, `bookmarksListEl`) so other stores can move focus across panels — e.g. ⌘← focuses the sidebar if closed, or hands focus to the viewer if the sidebar was already focused when it closes.
+
 Per-file reading state (page, scroll offset, zoom, pinned, bookmarks) is restored on open and saved debounced; zoom `null` means fit-to-width. Identity is content-based (see `library/identity.rs` above), so this state survives the file being renamed or moved.

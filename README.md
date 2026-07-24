@@ -11,6 +11,8 @@ A fast, minimal desktop PDF reader built with **Tauri 2**, **Svelte 5**, and **p
 - **Search & pins** — explorer-style folder tree, filename search with flat results, pin favorites to the top for quick access.
 - **Reading position** — the current page, scroll offset, and zoom are saved per file (keyed by content, so it survives the file being renamed or moved) and restored when you reopen it.
 - **Bookmarks** — save named positions within a document and jump back to them from the bookmarks panel.
+- **Keyboard-first navigation** — arrow keys move through the file list and bookmarks panel, with focus handed off cleanly between the sidebar, bookmarks panel, and document.
+- **Context menu actions** — right-click a file or folder to reveal it in Finder/Explorer.
 - **Customizable shortcuts** — rebind navigation, zoom, and panel shortcuts from Settings.
 - **Crisp rendering** — pages are rasterized by pdfium at the exact zoom × display scale, served through a custom `mantella://` protocol so they load as cached images.
 - **Auto-updates** — signed releases from GitHub; the app checks for updates on launch and from Settings.
@@ -39,6 +41,8 @@ Fixed:
 | ⌘O              | Open PDF…              |
 | ⌘⇧O             | Change library folder… |
 | ⌘,              | Settings…              |
+
+When the file list or bookmarks panel is focused: ↑ / ↓ moves the selection, Enter/Space opens it, ← / → collapses/expands a folder, Home/End jump to the first/last row, and Esc returns focus to the document.
 
 ## Development
 
@@ -178,3 +182,7 @@ src-tauri/src/
 ```
 
 Per-file reading state is keyed by a content-based id (partial hash + size, see `library/identity.rs`) in `files.json` in the app data directory, so it survives the file being renamed or moved; state of files deleted from the library is pruned automatically by the watcher.
+
+## License
+
+[MIT](LICENSE)
