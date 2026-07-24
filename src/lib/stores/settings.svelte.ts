@@ -1,3 +1,4 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import * as api from "../api/commands";
 import type { FileEntry, Theme } from "../api/types";
@@ -13,7 +14,11 @@ function resolveTheme(theme: Theme): "light" | "dark" {
 }
 
 function applyTheme(theme: Theme) {
-  document.documentElement.dataset.theme = resolveTheme(theme);
+  const resolved = resolveTheme(theme);
+  document.documentElement.dataset.theme = resolved;
+  // Also sync the native window chrome (e.g. the Windows title bar), which
+  // otherwise never learns about the app's theme and stays stuck in light.
+  void getCurrentWindow().setTheme(resolved);
 }
 
 class SettingsStore {
