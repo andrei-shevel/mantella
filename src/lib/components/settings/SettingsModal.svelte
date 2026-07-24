@@ -2,8 +2,9 @@
   // App-wide singleton settings dialog, driven by ui.settingsOpen.
   import Icon from "../common/Icon.svelte";
   import { ui } from "../../stores/ui.svelte";
+  import { settings } from "../../stores/settings.svelte";
   import { shortcuts } from "../../stores/shortcuts.svelte";
-  import { updater } from "../../stores/updater.svelte";
+  import type { Theme } from "../../api/types";
   import {
     SHORTCUTS,
     FIXED_SHORTCUTS,
@@ -18,6 +19,12 @@
     "General",
   ];
 
+  const THEMES: { value: Theme; label: string }[] = [
+    { value: "system", label: "System" },
+    { value: "light", label: "Light" },
+    { value: "dark", label: "Dark" },
+  ];
+
   const IGNORED_KEYS = new Set(["Meta", "Control", "Shift", "Alt", "CapsLock"]);
 
   let modalEl = $state<HTMLDivElement>();
@@ -28,35 +35,6 @@
     ui.closeSettings();
     recordingId = null;
     captureError = "";
-  }
-
-  function updateStatusLabel(): string {
-    switch (updater.status) {
-      case "checking":
-        return "Checking…";
-      case "available":
-        return `Version ${updater.availableVersion} available`;
-      case "up-to-date":
-        return "You're up to date";
-      case "downloading": {
-        const pct = updater.progress;
-        return pct == null
-          ? "Downloading…"
-          : `Downloading… ${Math.round(pct * 100)}%`;
-      }
-      case "installing":
-        return "Installing…";
-      case "error":
-        return updater.error ?? "Update check failed";
-      default:
-        return updater.currentVersion
-          ? `Version ${updater.currentVersion}`
-          : "Check for updates";
-    }
-  }
-
-  function updateBusy(): boolean {
-    return updater.busy;
   }
 
   function startRecording(id: string) {
@@ -129,28 +107,23 @@
       </header>
 
       <div class="body">
-        <h3>Updates</h3>
+        <h3>Appearance</h3>
         <div class="row">
-          <span class="label" class:error={updater.status === "error"}>
-            {updateStatusLabel()}
-          </span>
+          <span class="label">Theme</span>
           <div class="control">
-            {#if updater.status === "available"}
-              <button
-                class="action"
-                disabled={updateBusy()}
-                onclick={() => void updater.installAndRelaunch()}
-              >
-                Install and restart
-              </button>
-            {/if}
-            <button
-              class="action"
-              disabled={updateBusy()}
-              onclick={() => void updater.checkManually()}
-            >
-              Check for updates
-            </button>
+            <div class="segmented" role="radiogroup" aria-label="Theme">
+              {#each THEMES as t (t.value)}
+                <button
+                  class="segment"
+                  class:active={settings.theme === t.value}
+                  role="radio"
+                  aria-checked={settings.theme === t.value}
+                  onclick={() => void settings.setTheme(t.value)}
+                >
+                  {t.label}
+                </button>
+              {/each}
+            </div>
           </div>
         </div>
 
@@ -285,10 +258,6 @@
     white-space: nowrap;
   }
 
-  .label.error {
-    color: #e5484d;
-  }
-
   .control {
     display: flex;
     align-items: center;
@@ -296,22 +265,29 @@
     flex-shrink: 0;
   }
 
-  .action {
-    height: 24px;
-    padding: 0 10px;
-    border-radius: 6px;
+  .segmented {
+    display: flex;
+    padding: 2px;
+    border-radius: 7px;
     background: var(--bg-input);
-    color: var(--text-1);
+  }
+
+  .segment {
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 5px;
+    color: var(--text-2);
     font-size: 12px;
-    white-space: nowrap;
   }
 
-  .action:hover:not(:disabled) {
-    background: var(--hover);
+  .segment:hover {
+    color: var(--text-1);
   }
 
-  .action:disabled {
-    opacity: 0.55;
+  .segment.active {
+    background: var(--bg-raised);
+    color: var(--text-1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .binding {

@@ -1,9 +1,12 @@
 // Mirrors the Rust DTOs (serde camelCase).
 
+export type Theme = "system" | "light" | "dark";
+
 export interface Settings {
   libraryPath: string | null;
   lastFile: string | null;
   shortcuts: Record<string, KeyBinding>;
+  theme: Theme;
 }
 
 /** A keyboard shortcut binding; only entries the user customized are stored. */

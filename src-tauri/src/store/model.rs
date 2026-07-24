@@ -10,6 +10,21 @@ pub struct Settings {
     /// Keyboard shortcut overrides, keyed by shortcut id. Only entries the
     /// user has customized are present; everything else uses its frontend default.
     pub shortcuts: HashMap<String, KeyBinding>,
+    pub theme: Theme,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Theme {
+    System,
+    Light,
+    Dark,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Theme::System
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

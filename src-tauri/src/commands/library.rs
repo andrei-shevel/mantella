@@ -2,7 +2,7 @@ use crate::error::{AppError, Result};
 use crate::library::scanner::{self, FileEntry};
 use crate::library::watcher;
 use crate::state::AppState;
-use crate::store::{KeyBinding, Settings};
+use crate::store::{KeyBinding, Settings, Theme};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
@@ -72,6 +72,13 @@ pub fn set_pinned(
     entry.pinned = pinned;
     entry.last_known_path = Some(path);
     store.save_files()
+}
+
+#[tauri::command]
+pub fn set_theme(state: State<'_, AppState>, theme: Theme) -> Result<()> {
+    let mut store = state.store.lock().unwrap();
+    store.settings.theme = theme;
+    store.save_settings()
 }
 
 #[tauri::command]

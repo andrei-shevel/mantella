@@ -7,6 +7,7 @@ import type {
   PageLink,
   Settings,
   TextRun,
+  Theme,
 } from "./types";
 
 export const getSettings = () => invoke<Settings>("get_settings");
@@ -51,6 +52,9 @@ export const saveBookmarks = (id: string, bookmarks: Bookmark[]) =>
 
 export const setShortcuts = (shortcuts: Record<string, KeyBinding>) =>
   invoke<void>("set_shortcuts", { shortcuts });
+
+export const setTheme = (theme: Theme) =>
+  invoke<void>("set_theme", { theme });
 
 export const revealInFinder = (path: string) =>
   invoke<void>("reveal_in_finder", { path });
