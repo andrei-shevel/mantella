@@ -14,8 +14,9 @@ A fast, minimal desktop PDF reader built with **Tauri 2**, **Svelte 5**, and **p
 - **Keyboard-first navigation** — arrow keys move through the file list and bookmarks panel, with focus handed off cleanly between the sidebar, bookmarks panel, and document.
 - **Context menu actions** — right-click a file or folder to reveal it in Finder/Explorer.
 - **Customizable shortcuts** — rebind navigation, zoom, and panel shortcuts from Settings.
+- **Theme** — System, Light, or Dark from Settings → Appearance.
 - **Crisp rendering** — pages are rasterized by pdfium at the exact zoom × display scale, served through a custom `mantella://` protocol so they load as cached images.
-- **Auto-updates** — signed releases from GitHub; the app checks for updates on launch and from Settings.
+- **Auto-updates** — signed releases from GitHub; the app checks for updates on launch and from the app menu (Check for Updates…).
 
 ### Shortcuts
 
@@ -142,7 +143,7 @@ git push origin v0.2.0
 3. The [`release`](.github/workflows/release.yml) workflow builds macOS (arm64 + x64, signed + notarized), Windows, and Linux, creates a draft GitHub Release (using the matching `CHANGELOG.md` section as its notes) with installers + updater signatures, and uploads `latest.json` for the in-app updater.
 4. Review the draft release and publish it.
 
-Users on an older build are prompted on launch (and can check from Settings → Updates).
+Users on an older build are prompted on launch (and can check via Check for Updates… in the app menu).
 
 ### Verify a macOS build
 

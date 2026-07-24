@@ -5,6 +5,20 @@ used verbatim as the GitHub Release notes and as the `notes` field in
 `latest.json` shown by the in-app updater — see "Publish a release" in the
 README.
 
+## [0.1.2] - 2026-07-24
+
+### Added
+
+- Theme setting in Settings → Appearance: switch between System, Light, and Dark.
+
+### Changed
+
+- Manual update checks moved out of Settings and into a "Check for Updates…" item in the app menu, next to About; the update prompt still appears automatically when a new version is found.
+
+### Fixed
+
+- On Windows, the app menu's About item is now recognized even with its `&` mnemonic prefix, so Settings and Check for Updates land in the right place.
+
 ## [0.1.1] - 2026-07-24
 
 ### Added
