@@ -3,14 +3,16 @@
   import Icon from "../common/Icon.svelte";
   import FileItem from "./FileItem.svelte";
   import FolderTree from "./FolderTree.svelte";
-  import { library } from "../../stores/library.svelte";
+  import { library, rowDomId } from "../../stores/library.svelte";
   import { settings } from "../../stores/settings.svelte";
   import { ui } from "../../stores/ui.svelte";
+  import { reader } from "../../stores/reader.svelte";
   import { history } from "../../stores/history.svelte";
   import { shortcuts } from "../../stores/shortcuts.svelte";
 
   const isMac = navigator.userAgent.includes("Mac");
   let searchEl = $state<HTMLInputElement>();
+  let listEl = $state<HTMLDivElement>();
 
   let home = $state("");
   void homeDir().then((dir) => (home = dir.replace(/\/+$/, "")));
@@ -32,6 +34,63 @@
       searchEl?.select();
     }
   }
+
+  function onSearchKeydown(e: KeyboardEvent) {
+    if (e.key !== "ArrowDown" || library.filtered.length === 0) return;
+    e.preventDefault();
+    library.ensureCursor();
+    listEl?.focus();
+  }
+
+  function onListKeydown(e: KeyboardEvent) {
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        library.moveCursor(1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        library.moveCursor(-1);
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        library.expandCursor();
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        library.collapseCursor();
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        library.activateCursor();
+        break;
+      case "Home":
+        e.preventDefault();
+        library.moveCursorToEdge(true);
+        break;
+      case "End":
+        e.preventDefault();
+        library.moveCursorToEdge(false);
+        break;
+      case "Escape":
+        e.preventDefault();
+        reader.focusViewer();
+        break;
+    }
+  }
+
+  $effect(() => {
+    const key = library.cursor;
+    if (!key) return;
+    document
+      .getElementById(rowDomId(key))
+      ?.scrollIntoView({ block: "nearest" });
+  });
+
+  $effect(() => {
+    library.listEl = listEl ?? null;
+  });
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -73,10 +132,24 @@
       placeholder="Search files  ⌘F"
       spellcheck="false"
       autocomplete="off"
+      onkeydown={onSearchKeydown}
     />
   </div>
 
-  <div class="list">
+  <div
+    class="list"
+    role="tree"
+    tabindex="0"
+    aria-activedescendant={library.cursor ? rowDomId(library.cursor) : undefined}
+    bind:this={listEl}
+    onkeydown={onListKeydown}
+    onclick={() => listEl?.focus()}
+    onfocus={() => {
+      library.listFocused = true;
+      library.ensureCursor();
+    }}
+    onblur={() => (library.listFocused = false)}
+  >
     {#if library.query.trim()}
       <div class="section">Results</div>
       {#each library.filtered as file (file.path)}
@@ -89,7 +162,7 @@
       {#if library.pinned.length > 0}
         <div class="section">Pinned</div>
         {#each library.pinned as file (file.path)}
-          <FileItem {file} showDir={false} />
+          <FileItem {file} showDir={false} pinned />
         {/each}
       {/if}
 
@@ -180,6 +253,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 0 8px 8px;
+    outline: none;
   }
 
   .section {

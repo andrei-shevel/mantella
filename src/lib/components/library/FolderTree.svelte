@@ -3,7 +3,12 @@
   import Icon from "../common/Icon.svelte";
   import FileItem from "./FileItem.svelte";
   import * as api from "../../api/commands";
-  import { library, type DirNode } from "../../stores/library.svelte";
+  import {
+    library,
+    dirKey,
+    rowDomId,
+    type DirNode,
+  } from "../../stores/library.svelte";
   import { ui } from "../../stores/ui.svelte";
 
   let { node, depth = 0 }: { node: DirNode; depth?: number } = $props();
@@ -11,14 +16,22 @@
 
 {#each node.dirs as dir (dir.relPath)}
   {@const open = library.expanded.has(dir.relPath)}
+  {@const key = dirKey(dir)}
+  {@const isCursor = library.cursor === key && library.listFocused}
+  <!-- svelte-ignore a11y_interactive_supports_focus -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- keyboard interaction is owned by the tree container (roving cursor via aria-activedescendant), not this row -->
   <div
     class="folder"
+    class:cursor={isCursor}
     style="padding-left: {8 + depth * 14}px"
-    role="button"
-    tabindex="0"
-    onclick={() => library.toggleDir(dir.relPath)}
-    onkeydown={(e) => {
-      if (e.key === "Enter") library.toggleDir(dir.relPath);
+    role="treeitem"
+    id={rowDomId(key)}
+    aria-selected={isCursor}
+    aria-expanded={open}
+    onclick={() => {
+      library.setCursor(key);
+      library.toggleDir(dir.relPath);
     }}
     oncontextmenu={(e) =>
       ui.openContextMenu(e, [
@@ -57,7 +70,7 @@
     background: var(--hover);
   }
 
-  .folder:focus-visible {
+  .folder.cursor {
     box-shadow: 0 0 0 2px var(--accent);
   }
 

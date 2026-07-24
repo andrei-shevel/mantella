@@ -11,6 +11,10 @@
   let draft = $state("");
   let inputEl = $state<HTMLInputElement>();
 
+  let isCursor = $derived(
+    reader.bookmarkCursor === bookmark.id && reader.bookmarksListFocused,
+  );
+
   function startEditing() {
     draft = bookmark.title;
     editing = true;
@@ -34,18 +38,21 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_interactive_supports_focus -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- keyboard interaction is owned by the bookmarks list container (roving cursor via aria-activedescendant), not this row -->
 <div
   class="item"
-  role="button"
-  tabindex="0"
+  class:cursor={isCursor}
+  role="option"
+  id={`bookmark-${bookmark.id}`}
+  aria-selected={isCursor}
   title={bookmark.title}
   onclick={() => {
+    reader.bookmarkCursor = bookmark.id;
     if (!editing) onactivate();
   }}
   ondblclick={startEditing}
-  onkeydown={(e) => {
-    if (e.key === "Enter" && !editing) onactivate();
-  }}
   oncontextmenu={(e) =>
     ui.openContextMenu(e, [
       { label: "Rename", action: startEditing },
@@ -93,7 +100,7 @@
     background: var(--hover);
   }
 
-  .item:focus-visible {
+  .item.cursor {
     box-shadow: 0 0 0 2px var(--accent);
   }
 

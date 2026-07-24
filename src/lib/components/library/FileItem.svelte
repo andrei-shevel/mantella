@@ -4,15 +4,29 @@
   import { reader } from "../../stores/reader.svelte";
   import { ui } from "../../stores/ui.svelte";
   import { formatBytes } from "../../utils/format";
+  import {
+    library,
+    pinnedKey,
+    fileKey,
+    rowDomId,
+  } from "../../stores/library.svelte";
   import type { FileEntry } from "../../api/types";
 
   let {
     file,
     depth = 0,
     showDir = true,
-  }: { file: FileEntry; depth?: number; showDir?: boolean } = $props();
+    pinned = false,
+  }: {
+    file: FileEntry;
+    depth?: number;
+    showDir?: boolean;
+    pinned?: boolean;
+  } = $props();
 
+  let key = $derived(pinned ? pinnedKey(file) : fileKey(file));
   let active = $derived(reader.path === file.path);
+  let isCursor = $derived(library.cursor === key && library.listFocused);
   let dir = $derived(
     showDir && file.relPath.includes("/")
       ? file.relPath.slice(0, file.relPath.lastIndexOf("/"))
@@ -20,16 +34,21 @@
   );
 </script>
 
+<!-- svelte-ignore a11y_interactive_supports_focus -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- keyboard interaction is owned by the tree container (roving cursor via aria-activedescendant), not this row -->
 <div
   class="item"
   class:active
+  class:cursor={isCursor}
   style="padding-left: {8 + depth * 14}px"
-  role="button"
-  tabindex="0"
+  role="treeitem"
+  id={rowDomId(key)}
+  aria-selected={isCursor}
   title="{file.relPath} · {formatBytes(file.size)}"
-  onclick={() => void reader.open(file.path)}
-  onkeydown={(e) => {
-    if (e.key === "Enter") void reader.open(file.path);
+  onclick={() => {
+    library.setCursor(key);
+    void reader.open(file.path);
   }}
   oncontextmenu={(e) =>
     ui.openContextMenu(e, [
@@ -61,7 +80,7 @@
     background: var(--hover);
   }
 
-  .item:focus-visible {
+  .item.cursor {
     box-shadow: 0 0 0 2px var(--accent);
   }
 

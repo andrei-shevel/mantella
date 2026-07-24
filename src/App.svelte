@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { message, open } from "@tauri-apps/plugin-dialog";
   import { takePendingOpenFiles } from "./lib/api/commands";
@@ -78,11 +78,35 @@
 
     if (shortcuts.matches("toggle-sidebar", e)) {
       e.preventDefault();
-      ui.toggleSidebar();
+      if (!ui.sidebarOpen) {
+        // Closed: open it, then focus it once it's mounted.
+        ui.toggleSidebar();
+        void tick().then(() => library.focusList());
+      } else if (library.listFocused) {
+        // Open and focused: hide it, then focus the content area. The tick
+        // waits out the sidebar's removal so it can't steal focus back.
+        ui.toggleSidebar();
+        void tick().then(() => reader.focusViewer());
+      } else {
+        // Open but unfocused: just focus it.
+        library.focusList();
+      }
     } else if (shortcuts.matches("toggle-bookmarks", e)) {
       if (reader.docId === null) return; // no doc open: true no-op
       e.preventDefault();
-      ui.toggleBookmarksPanel();
+      if (!ui.bookmarksPanelOpen) {
+        // Closed: open it, then focus it once it's mounted.
+        ui.toggleBookmarksPanel();
+        void tick().then(() => reader.focusBookmarksList());
+      } else if (reader.bookmarksListFocused) {
+        // Open and focused: hide it, then focus the content area. The tick
+        // waits out the panel's removal so it can't steal focus back.
+        ui.toggleBookmarksPanel();
+        void tick().then(() => reader.focusViewer());
+      } else {
+        // Open but unfocused: just focus it.
+        reader.focusBookmarksList();
+      }
     } else if (e.key >= "1" && e.key <= "9") {
       const file = library.pinned[Number(e.key) - 1];
       if (!file) return; // out of range: no-op, not an error

@@ -41,6 +41,9 @@
 ==+*#%@@@@@@@@@@@@#+====+@@@@@@@@@@%=`;
 
   let container = $state<HTMLDivElement>();
+  $effect(() => {
+    reader.viewerEl = container ?? null;
+  });
   let containerWidth = $state(0);
   let containerHeight = $state(0);
   let scrollTop = $state(0);
@@ -277,6 +280,7 @@
     <div class="doc-area">
       <div
         class="scroll"
+        tabindex="-1"
         bind:this={container}
         bind:clientWidth={containerWidth}
         bind:clientHeight={containerHeight}
@@ -370,6 +374,7 @@
     flex: 1;
     overflow: auto;
     min-height: 0;
+    outline: none;
   }
 
   .canvas {

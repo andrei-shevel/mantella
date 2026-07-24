@@ -49,6 +49,58 @@ class ReaderStore {
   /** Jump within the open document (bookmarks, history), consumed by the Viewer. */
   pendingJump = $state<{ page: number; offset: number } | null>(null);
 
+  /** The Viewer's scrollable container; set by the Viewer, focused from elsewhere (e.g. the sidebar). */
+  viewerEl: HTMLElement | null = null;
+
+  focusViewer() {
+    this.viewerEl?.focus();
+  }
+
+  /** Bookmark id the keyboard cursor points at, in the bookmarks panel. */
+  bookmarkCursor = $state<string | null>(null);
+  /** Whether the bookmarks list currently holds keyboard focus. */
+  bookmarksListFocused = $state(false);
+  /** The bookmarks list container; set by BookmarksPanel, focused from elsewhere (e.g. ⌘→). */
+  bookmarksListEl: HTMLElement | null = null;
+
+  focusBookmarksList() {
+    this.bookmarksListEl?.focus();
+  }
+
+  /** Points the cursor at something sensible if it's unset or no longer visible. */
+  ensureBookmarkCursor() {
+    const rows = this.bookmarksSorted;
+    if (this.bookmarkCursor && rows.some((b) => b.id === this.bookmarkCursor))
+      return;
+    this.bookmarkCursor = rows[0]?.id ?? null;
+  }
+
+  moveBookmarkCursor(delta: number) {
+    const rows = this.bookmarksSorted;
+    if (rows.length === 0) return;
+    const idx = rows.findIndex((b) => b.id === this.bookmarkCursor);
+    if (idx === -1) {
+      this.bookmarkCursor = delta > 0 ? rows[0].id : rows[rows.length - 1].id;
+      return;
+    }
+    const next = Math.min(Math.max(idx + delta, 0), rows.length - 1);
+    this.bookmarkCursor = rows[next].id;
+  }
+
+  moveBookmarkCursorToEdge(start: boolean) {
+    const rows = this.bookmarksSorted;
+    if (rows.length === 0) return;
+    this.bookmarkCursor = start ? rows[0].id : rows[rows.length - 1].id;
+  }
+
+  /** Enter: jump to the bookmark and move focus to the reader. */
+  activateBookmarkCursor() {
+    const bm = this.bookmarksSorted.find((b) => b.id === this.bookmarkCursor);
+    if (!bm) return;
+    history.navigate({ page: bm.page, offset: bm.pageOffset });
+    this.focusViewer();
+  }
+
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private lastPageOffset = 0;
 
