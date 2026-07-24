@@ -55,7 +55,7 @@ fn setup_menu(app: &tauri::App) -> tauri::Result<MenuItem<tauri::Wry>> {
             continue;
         };
         let about_pos = sub.items()?.iter().position(|item| {
-            matches!(item, MenuItemKind::Predefined(p) if p.text().is_ok_and(|t| t.starts_with("About")))
+            matches!(item, MenuItemKind::Predefined(p) if p.text().is_ok_and(|t| t.trim_start_matches('&').starts_with("About")))
         });
         if let Some(pos) = about_pos {
             sub.remove_at(pos)?;
